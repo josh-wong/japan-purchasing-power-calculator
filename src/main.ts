@@ -93,6 +93,7 @@ function showHomeField() {
   homeField.value = homePayByCurrency.get(currency) ?? '';
   byId('home-label').textContent = `Comparison income (${currency})`;
   byId('home-prefix').textContent = moneySymbol(currency);
+  showError(homeField, '');
 }
 
 function formatShare(share: number | null) {
@@ -109,9 +110,6 @@ function render(announce = true) {
   const price = parseAmount(priceField.value, true, 'JPY');
   const japan = parseAmount(japanField.value, false, 'JPY');
   const home = parseAmount(homeField.value, false, currency);
-  showError(priceField, price.error);
-  showError(japanField, japan.error);
-  showError(homeField, home.error);
 
   if (presetField.value !== '' && price.amount !== Number(presetField.value)) presetField.value = '';
 
@@ -131,7 +129,7 @@ function render(announce = true) {
       const shareDescription = japanShare !== null && japanShare > 0 && japanShareText !== '<0.01%'
         ? `about ${japanShareText}`
         : spokenShare(japanShareText);
-      resultNote = `This purchase takes ${shareDescription} of the monthly pay entered for Japan. The same share of the comparison income comes to ${equivalentText}.`;
+      resultNote = `This purchase takes ${shareDescription} of the monthly pay entered for Japan. That’s like spending ${equivalentText} from the comparison income.`;
     }
   }
 
@@ -152,15 +150,14 @@ function render(announce = true) {
     clearTimeout(announcementTimer);
     announcementTimer = setTimeout(() => {
       const metrics = [
-        ['equivalent', 'Equivalent cost based on income'], ['converted', 'Converted price'],
-        ['japan-share', 'Percentage of income in Japan'], ['home-share', 'Percentage of comparison income at the converted price'],
+        ['equivalent', 'Equivalent cost based on income'], ['converted', 'Price at the exchange rate'],
       ];
       const spokenResults = metrics.map(([id, label]) => {
         const value = byId(id).textContent ?? '';
-        return value === '—' ? '' : `${label} ${spokenShare(value)}. `;
+        return value === '—' ? '' : `${label} ${value}. `;
       }).join('');
       const conversionStatus = price.amount !== null && byId('rate-pair').hidden ? 'Exchange rate unavailable.' : '';
-      byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, byId('result-note').textContent].filter(Boolean).join(' ');
+      byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(' ');
     }, 450);
   }
 }
@@ -169,7 +166,10 @@ form.addEventListener('submit', (event) => event.preventDefault());
 form.addEventListener('input', (event) => {
   const field = event.target as HTMLInputElement;
   if (field === homeField) homePayByCurrency.set(currencyField.value, field.value);
-  if (field === priceField || field === japanField || field === homeField) render();
+  if (field === priceField || field === japanField || field === homeField) {
+    showError(field, '');
+    render();
+  }
 });
 
 form.addEventListener('focusout', (event) => {
@@ -177,6 +177,7 @@ form.addEventListener('focusout', (event) => {
   if (field !== priceField && field !== japanField && field !== homeField) return;
   const currency = field === homeField ? currencyField.value : 'JPY';
   const parsed = parseAmount(field.value, field === priceField, currency);
+  showError(field, parsed.error);
   if (parsed.amount === null) return;
   field.value = enteredMoneyFormatter(currency, parsed.precision ?? 0).formatToParts(parsed.amount)
     .filter((part) => part.type !== 'currency' && part.type !== 'literal')
@@ -188,7 +189,10 @@ form.addEventListener('focusout', (event) => {
 
 form.addEventListener('change', (event) => {
   if (event.target === presetField) {
-    if (presetField.value !== '') priceField.value = wholeNumberFormat.format(Number(presetField.value));
+    if (presetField.value !== '') {
+      priceField.value = wholeNumberFormat.format(Number(presetField.value));
+      showError(priceField, '');
+    }
   } else if (event.target === currencyField) {
     showHomeField();
   } else {
@@ -198,6 +202,7 @@ form.addEventListener('change', (event) => {
 });
 
 byId('reset').addEventListener('click', () => {
+  for (const field of [priceField, japanField, homeField]) showError(field, '');
   homePayByCurrency.clear();
   homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
   presetField.value = defaultPreset;

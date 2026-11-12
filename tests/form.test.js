@@ -26,6 +26,7 @@ it('renders the default fixture and all nine presets', () => {
   expect(field('price').value).toBe('200,000');
   change('price', '200001');
   expect(field('preset').value).toBe('');
+  expect(field('preset').selectedOptions[0].textContent).toBe('Custom price');
   expect(field('example-disclaimer').textContent).toBe('These are example prices. Actual prices vary.');
 });
 it('restores income per currency and resets the scenario', () => {
@@ -64,10 +65,17 @@ it('preserves fractional yen on blur and announces after a pause', () => {
   expect(field('price').value).toBe('5,000.5');
   expect(field('result-announcement').textContent).toBe('');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toContain('at the converted price');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost based on income US$80.01. Price at the exchange rate US$31.40.');
+});
+it('announces the missing-income prompt while keeping the available converted price', () => {
+  change('japan', '');
+  vi.advanceTimersByTime(450);
+  expect(field('result-announcement').textContent).toBe('Price at the exchange rate US$31.40. Enter the income in Japan to see the equivalent cost.');
 });
 it('keeps independently computable outputs and exposes inline errors', () => {
   change('japan', '0');
+  expect(field('japan').getAttribute('aria-invalid')).not.toBe('true');
+  field('japan').dispatchEvent(new Event('focusout', { bubbles: true }));
   expect(field('japan').getAttribute('aria-invalid')).toBe('true');
   expect(field('equivalent').textContent).toBe('—');
   expect(field('converted').textContent).toBe('US$31.40');
@@ -75,6 +83,40 @@ it('keeps independently computable outputs and exposes inline errors', () => {
   expect(field('home-share').textContent).toBe('—');
   change('price', '0');
   expect(field('converted').textContent).toBe('US$0.00');
+});
+it('defers formatting errors until blur and clears them when editing resumes', () => {
+  change('price', '1,');
+  expect(field('price-error').hidden).toBe(true);
+  field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('price-error').hidden).toBe(false);
+  expect(field('price').getAttribute('aria-invalid')).toBe('true');
+  change('home', '5000');
+  expect(field('price-error').hidden).toBe(false);
+  change('price', '1,0');
+  expect(field('price-error').hidden).toBe(true);
+  expect(field('price').getAttribute('aria-invalid')).toBe('false');
+  change('price', '1,000');
+  expect(field('equivalent').textContent).toBe('US$20.00');
+  field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('price').value).toBe('1,000');
+});
+it('clears obsolete errors when presets, currencies, or defaults replace inputs', () => {
+  change('price', 'bad');
+  field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
+  change('preset', '1000', 'change');
+  expect(field('price-error').hidden).toBe(true);
+  change('home', 'bad');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  change('currency', 'EUR', 'change');
+  expect(field('home-error').hidden).toBe(true);
+  change('japan', '0');
+  field('japan').dispatchEvent(new Event('focusout', { bubbles: true }));
+  field('reset').click();
+  for (const id of ['price', 'japan', 'home']) {
+    expect(field(`${id}-error`).hidden).toBe(true);
+    expect(field(id).getAttribute('aria-invalid')).toBe('false');
+  }
+  expect(field('equivalent').textContent).toBe('US$80.00');
 });
 it('formats small and large percentages and currency precision', () => {
   change('price', '.01');

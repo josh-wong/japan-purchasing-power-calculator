@@ -94,6 +94,7 @@
     h2 { font-size: 1.25rem; letter-spacing: -.035em; }
     .reset { background: transparent; color: var(--accent-ink); border: 0; padding: .4rem .15rem; font-size: .85rem; text-decoration: underline; text-underline-offset: .19em; }
     .preset-field { margin-bottom: 1rem; }
+    .preset-field .field-note { margin: 0 0 .6rem; }
     .form-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .85rem; }
     .price-row { row-gap: .45rem; }
     .field-label, legend { display: block; font-size: .84rem; font-weight: 720; }

@@ -148,6 +148,7 @@
     h2 { font-size: 1.25rem; letter-spacing: -.035em; }
     .reset { background: transparent; color: var(--accent-ink); border: 0; padding: .4rem .15rem; font-size: .85rem; text-decoration: underline; text-underline-offset: .19em; }
     .preset-field { margin-bottom: 1rem; }
+    .preset-field .field-note { margin: 0 0 .6rem; }
     .form-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .85rem; }
     .price-row { row-gap: .45rem; }
     .field-label, legend { display: block; font-size: .84rem; font-weight: 720; }
@@ -218,6 +219,7 @@
       .wrap { width: calc(100% - 1.5rem); }
       .form-row { grid-template-columns: minmax(0, 1fr); }
     }
+    .site-footer { padding-block-end: 2rem; color: var(--muted); font-size: .875rem; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -245,21 +247,22 @@
 
   <main class="wrap">
     <div class="intro">
-      <h1>What does a purchase in Japan cost in another currency?</h1>
-      <p>See the converted price and compare what the same purchase costs relative to income.</p>
+      <h1>How does a purchase in Japan compare with monthly income?</h1>
+      <p>Compare a purchase with monthly take-home pay in Japan and another currency. See its price at the exchange rate too.</p>
     </div>
 
     <div class="calculator">
       <form class="panel inputs" aria-labelledby="scenario-title" novalidate>
         <div class="section-head">
           <h2 id="scenario-title">Comparison setup</h2>
-          <button type="button" class="reset" id="reset">Reset example</button>
+          <button type="button" class="reset" id="reset">Restore defaults</button>
         </div>
 
         <div class="preset-field">
           <label class="field-label" for="preset">Try an example</label>
+          <p id="example-disclaimer" class="field-note">These are example prices. Actual prices vary.</p>
           <select id="preset" aria-describedby="example-disclaimer">
-            <option value="" disabled hidden>Choose an example</option>
+            <option value="" disabled hidden>Custom price</option>
             <option value="1000">Casual lunch · JP¥1,000</option>
             <option value="2000">Box of Japanese sweets · JP¥2,000</option>
             <option value="5000" selected>Attraction ticket · JP¥5,000</option>
@@ -270,7 +273,6 @@
             <option value="100000">Private sightseeing tour (four people) · JP¥100,000</option>
             <option value="200000">Gaming PC (8 GB VRAM) · JP¥200,000</option>
           </select>
-          <p id="example-disclaimer" class="field-note">These are example prices. Actual prices vary.</p>
         </div>
 
         <div class="form-row price-row">
@@ -278,7 +280,7 @@
             <label class="field-label" for="price">Price in Japan (JPY)</label>
             <div class="input-shell">
               <span class="prefix" aria-hidden="true">JP¥</span>
-              <input id="price" type="text" inputmode="decimal" value="5,000" autocomplete="off" aria-describedby="price-error">
+              <input id="price" type="text" inputmode="decimal" value="5,000" autocomplete="off" aria-describedby="number-format price-error">
             </div>
             <p id="price-error" class="error" hidden></p>
           </div>
@@ -301,13 +303,13 @@
 
         <fieldset class="pay-fields" aria-describedby="pay-help">
           <legend>Monthly take-home pay</legend>
-          <p id="pay-help" class="help">Enter pay after taxes and other deductions. You can use actual or example incomes.</p>
+          <p id="pay-help" class="help">Enter monthly pay after taxes and other deductions. The prefilled amounts are editable examples, not national averages.</p>
           <div class="form-row">
             <div>
               <label class="field-label" for="japan">Japan income (JPY)</label>
               <div class="input-shell">
                 <span class="prefix" aria-hidden="true">JP¥</span>
-                <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="japan-error">
+                <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="number-format japan-error">
               </div>
               <p id="japan-error" class="error" hidden></p>
             </div>
@@ -315,27 +317,28 @@
               <label id="home-label" class="field-label" for="home">Comparison income (USD)</label>
               <div class="input-shell">
                 <span class="prefix" id="home-prefix" aria-hidden="true">US$</span>
-                <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="home-error">
+                <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format home-error">
               </div>
               <p id="home-error" class="error" hidden></p>
             </div>
           </div>
         </fieldset>
+        <p id="number-format" class="field-note">Number format: 4,000.50 or 4000.50.</p>
       </form>
 
       <section class="panel result" aria-labelledby="result-title">
         <div class="result-main">
           <h2 id="result-title">Equivalent cost based on income</h2>
           <p id="equivalent" class="hero-amount">US$80.00</p>
-          <p id="result-note" class="metric-note">This purchase takes about 2% of the monthly pay entered for Japan. The same share of the comparison income comes to US$80.00.</p>
+          <p id="result-note" class="metric-note">This purchase takes about 2% of the monthly pay entered for Japan. That’s like spending US$80.00 from the comparison income.</p>
         </div>
         <div class="metric">
-          <h3>Converted price</h3>
+          <h3>Price at the exchange rate</h3>
           <p id="converted" class="metric-value">US$31.40</p>
           <p class="metric-note"><a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer" aria-label="ECB reference rates (opens in a new tab)">ECB reference rates</a><span id="rate-note"> · November 11, 2026 · Saved</span></p>
         </div>
         <section class="share-section" aria-labelledby="share-title">
-          <h3 id="share-title">Percentage of monthly take-home pay</h3>
+          <h3 id="share-title">Percentage of monthly take-home pay at the exchange rate</h3>
           <dl class="pay-shares">
             <div class="metric">
               <dt>Japan income</dt>
@@ -374,6 +377,10 @@
       </section>
     </div>
   </main>
+
+  <footer class="wrap site-footer">
+    <p>Estimates for information only, not financial advice. Exchange rates exclude card and exchange fees. Income comparisons use the amounts you enter and do not account for differences in living costs. Your inputs stay in this browser and aren’t saved.</p>
+  </footer>
 
   <script>
     'use strict';
@@ -527,6 +534,7 @@
       homeField.value = homePayByCurrency.get(currency) ?? '';
       byId('home-label').textContent = `Comparison income (${currency})`;
       byId('home-prefix').textContent = moneySymbol(currency);
+      showError(homeField, '');
     }
 
     function formatShare(share) {
@@ -543,9 +551,6 @@
       const price = parseAmount(priceField.value, true, 'JPY');
       const japan = parseAmount(japanField.value, false, 'JPY');
       const home = parseAmount(homeField.value, false, currency);
-      showError(priceField, price.error);
-      showError(japanField, japan.error);
-      showError(homeField, home.error);
 
       if (presetField.value !== '' && price.amount !== Number(presetField.value)) presetField.value = '';
 
@@ -568,7 +573,7 @@
           const shareDescription = japanShare > 0 && japanShareText !== '<0.01%'
             ? `about ${japanShareText}`
             : spokenShare(japanShareText);
-          resultNote = `This purchase takes ${shareDescription} of the monthly pay entered for Japan. The same share of the comparison income comes to ${equivalentText}.`;
+          resultNote = `This purchase takes ${shareDescription} of the monthly pay entered for Japan. That’s like spending ${equivalentText} from the comparison income.`;
         }
       }
 
@@ -589,15 +594,14 @@
         clearTimeout(announcementTimer);
         announcementTimer = setTimeout(() => {
           const metrics = [
-            ['equivalent', 'Equivalent cost based on income'], ['converted', 'Converted price'],
-            ['japan-share', 'Percentage of income in Japan'], ['home-share', 'Percentage of comparison income at the converted price'],
+            ['equivalent', 'Equivalent cost based on income'], ['converted', 'Price at the exchange rate'],
           ];
           const spokenResults = metrics.map(([id, label]) => {
             const value = byId(id).textContent;
-            return value === '—' ? '' : `${label} ${spokenShare(value)}. `;
+            return value === '—' ? '' : `${label} ${value}. `;
           }).join('');
           const conversionStatus = price.amount !== null && byId('rate-pair').hidden ? 'Exchange rate unavailable.' : '';
-          byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, byId('result-note').textContent].filter(Boolean).join(' ');
+          byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(' ');
         }, 450);
       }
     }
@@ -606,7 +610,10 @@
     form.addEventListener('input', (event) => {
       const field = event.target;
       if (field === homeField) homePayByCurrency.set(currencyField.value, field.value);
-      if (field === priceField || field === japanField || field === homeField) render();
+      if (field === priceField || field === japanField || field === homeField) {
+        showError(field, '');
+        render();
+      }
     });
 
     form.addEventListener('focusout', (event) => {
@@ -614,6 +621,7 @@
       if (field !== priceField && field !== japanField && field !== homeField) return;
       const currency = field === homeField ? currencyField.value : 'JPY';
       const parsed = parseAmount(field.value, field === priceField, currency);
+      showError(field, parsed.error);
       if (parsed.amount === null) return;
       field.value = enteredMoneyFormatter(currency, parsed.precision).formatToParts(parsed.amount)
         .filter((part) => part.type !== 'currency' && part.type !== 'literal')
@@ -625,7 +633,10 @@
 
     form.addEventListener('change', (event) => {
       if (event.target === presetField) {
-        if (presetField.value !== '') priceField.value = wholeNumberFormat.format(Number(presetField.value));
+        if (presetField.value !== '') {
+          priceField.value = wholeNumberFormat.format(Number(presetField.value));
+          showError(priceField, '');
+        }
       } else if (event.target === currencyField) {
         showHomeField();
       } else {
@@ -635,6 +646,7 @@
     });
 
     byId('reset').addEventListener('click', () => {
+      for (const field of [priceField, japanField, homeField]) showError(field, '');
       homePayByCurrency.clear();
       homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
       presetField.value = defaultPreset;
