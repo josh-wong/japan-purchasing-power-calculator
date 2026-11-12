@@ -1,6 +1,6 @@
 # Custom agents for Japan Purchasing Power Calculator
 
-This directory contains project-specific Claude Code subagents. They follow the current planning and mockup stage; production build and test commands must be added when the Vite app exists.
+This directory contains project-specific Claude Code subagents. They follow the Vite app and preserved reference mockup.
 
 ## Available agents
 
@@ -79,3 +79,5 @@ Each agent is defined in a Markdown file with YAML frontmatter followed by a sys
 ## Contributing
 
 When adding new agents to this directory, follow the existing naming convention using lowercase with hyphens. Use clear, descriptive names that indicate the agent's purpose. Document the agent's capabilities and provide example usage in this README. Specify appropriate tools and model in the YAML frontmatter based on the agent's complexity. Test thoroughly before committing to ensure the agent behaves as expected across different scenarios.
+
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.

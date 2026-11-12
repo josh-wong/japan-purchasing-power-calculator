@@ -25,7 +25,7 @@ Japan Purchasing Power Calculator is an English-language web calculator for visi
 
 ### Key components
 
-The repository currently contains planning documents and a standalone HTML/CSS/JavaScript mockup, not a production app or package manifest. The planned app uses HTML, CSS, TypeScript, and Vite, with a pure calculation module, in-memory form state, and a same-origin ECB rate snapshot refreshed by GitHub Actions and deployed to GitHub Pages.
+The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. The migration uses an injected dated rate fixture; production ECB ingestion and GitHub Pages publication are separate work.
 
 ### Architecture patterns
 
@@ -106,7 +106,7 @@ PR titles follow the same verb-first convention as commit messages (for example,
 
 Use idiomatic HTML, CSS, JavaScript for the mockup and TypeScript for the planned app. Follow the design document’s crimson palette, currency formatting, numeric validation, and English UI text. Support a 320 CSS-pixel viewport, keyboard navigation, visible focus, field labels, inline errors, and polite result announcements. Support System, Light, and Dark appearance, live system changes, and unavailable browser storage.
 
-Current checks (Python 3 and Node.js required): `python3 scripts/check_repository.py lint` and `python3 scripts/check_repository.py mockup`. These check repository consistency and inline JavaScript syntax; they are not application tests. No production build, test suite, or linter has been configured. Add commands here and update CI when the Vite app is implemented.
+Use Node.js 24.15 or later in the 24.x line, or Node.js 26 or later and Python 3. Install with `npm ci`; run `npm run dev`, `npm run build`, and `npm run preview`. Checks are `npm run typecheck`, `npm test`, and `npm run lint`. Lint includes repository text checks and reference mockup syntax validation. CI runs lint, type-checking, tests, and builds for root and project base paths.
 
 ## Privacy and security considerations
 

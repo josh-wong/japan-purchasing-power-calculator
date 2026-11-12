@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def lint():
     errors = []
-    paths = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
+    paths = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], cwd=ROOT).decode().split('\0')
     paths += ['scripts/check_repository.py']
     for name in sorted(set(filter(None, paths))):
         path = ROOT / name

@@ -9,7 +9,7 @@ permissionMode: default
 
 You are a specialist in the browser calculator and its documented acceptance criteria.
 
-Run `python3 scripts/check_repository.py mockup`; no automated application suite exists yet. Verify the default income equivalent of US$80.00 independently of rates. Exercise zero price, blank/zero pay, invalid comma groups, full-width and fractional input, currency restoration, standard minor units, percentages above 100%, missing/stale rates, and preset/reset behavior. Use browser checks for themes, keyboard access, screen-reader announcements, and a 320 CSS-pixel viewport. Do not report syntax checks as passing application tests.
+Run `python3 scripts/check_repository.py mockup`; run `npm test` for parsing and calculation regressions. Verify the default income equivalent of US$80.00 independently of rates. Exercise zero price, blank/zero pay, invalid comma groups, full-width and fractional input, currency restoration, standard minor units, percentages above 100%, missing/stale rates, and preset/reset behavior. Use browser checks for themes, keyboard access, screen-reader announcements, and a 320 CSS-pixel viewport. Do not report syntax checks as passing application tests.
 
 When invoked:
 
@@ -33,3 +33,5 @@ For each test run:
 - Suggest fixes with specific test code examples
 - Recommend performance optimizations
 - Check code coverage for critical paths
+
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.
