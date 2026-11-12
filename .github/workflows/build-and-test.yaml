@@ -1,24 +1,10 @@
-# build-and-test.yaml
-#
-# TEMPLATE: this workflow is a skeleton. Fill in the runner and build/test
-# steps for this project's actual language and toolchain, then delete this
-# comment block. See the root README.md for the AI-assistant instructions
-# that cover this file.
-name: Build and test
+name: Mockup syntax
 
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '*.md'
   push:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '*.md'
 
 concurrency:
   group: build-and-test-${{ github.ref }}
@@ -28,47 +14,19 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-slim # Use ubuntu-slim for cost savings. Change only if this project needs macos-* (e.g. Xcode) or windows-*. For most projects, ubuntu-slim + explicit tool setup is faster and cheaper than ubuntu-latest.
-    timeout-minutes: 20
+  check:
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # AI AGENT GUIDANCE: Replace the steps below with the project's real setup + build + test steps.
-      # Since we're using ubuntu-slim, make sure to explicitly set up any required tools.
-      # Most setup actions (setup-node, setup-python, etc.) work fine on ubuntu-slim.
-      # Examples:
-      #
-      # Node:
-      #   - uses: actions/setup-node@v4
-      #     with:
-      #       node-version: 22
-      #   - run: npm ci
-      #   - run: npm run build --if-present
-      #   - run: npm test
-      #
-      # Python:
-      #   - uses: actions/setup-python@v5
-      #     with:
-      #       python-version: "3.12"
-      #   - run: pip install -e .[dev]
-      #   - run: pytest
-      #
-      # Go:
-      #   - uses: actions/setup-go@v5
-      #     with:
-      #       go-version: "1.23"
-      #   - run: go build ./...
-      #   - run: go test ./...
-      #
-      # Swift/Xcode (requires runs-on: macos-latest, not ubuntu-slim):
-      #   - run: |
-      #       xcodebuild test \
-      #         -project {{ProjectName}}.xcodeproj \
-      #         -scheme {{ProjectName}} \
-      #         -destination "platform=iOS Simulator,name=iPhone 17,OS=latest" \
-      #         -skipMacroValidation \
-      #         CODE_SIGNING_ALLOWED=NO
-      - name: Build and test
-        run: echo "TODO - replace with this project's real build and test commands" && exit 1
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run mockup syntax
+        run: python3 scripts/check_repository.py mockup

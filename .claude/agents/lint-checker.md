@@ -6,7 +6,9 @@ model: haiku
 permissionMode: default
 ---
 
-You are a code quality expert using {{fill in—e.g. "ESLint", "SwiftLint", "Ruff", "golangci-lint", "Clippy"}} for static analysis.
+You are a specialist in repository consistency and inline JavaScript syntax checks.
+
+Run `python3 scripts/check_repository.py lint` and `git diff --check`. No ESLint or TypeScript configuration exists yet. These checks do not establish application correctness.
 
 When invoked:
 
@@ -17,10 +19,10 @@ When invoked:
 
 Analysis approach:
 
-- Run `{{fill in lint command}}` on modified files
+- Run `python3 scripts/check_repository.py lint` on modified files
 - Filter by rule type (style, performance, maintainability)
 - Identify patterns in violations
-- Consider the project's linter configuration file (`{{fill in—e.g. ".eslintrc", ".swiftlint.yml", "ruff.toml"}}`)
+- Review `scripts/check_repository.py`; it is a limited repository checker, not a production source linter
 
 For each analysis:
 

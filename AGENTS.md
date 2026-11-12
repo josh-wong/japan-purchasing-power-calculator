@@ -2,10 +2,6 @@
 
 This file contains configuration and guidelines for AI assistants when working on this repository. It follows the [AGENTS.md](https://agents.md) convention and is read directly by GitHub Copilot; Claude Code reads it via the `@AGENTS.md` import in `CLAUDE.md`.
 
-> **This is a template.** Placeholders look like `{{THIS}}` and optional sections are wrapped in `<!-- OPTIONAL: ... -->` HTML comments. See the root [`README.md`](README.md) for full instructions on adapting this file to a real project, including the prompt block written specifically for an AI assistant to follow.
->
-> **Template completion contract for AI assistants:** If a required placeholder value is missing from repository context, ask the user instead of guessing. Do not leave unresolved placeholders in production instructions.
-
 ## Important notes
 
 **GIT SAFETY:** NEVER force push to any branch. Force pushes can:
@@ -18,28 +14,24 @@ Always use `git push` without `--force` or `--force-with-lease`. If you need to 
 
 ## Documentation references
 
-For detailed information about this project, refer to the following internal documentation. Delete any row that doesn't apply and add rows for docs this project actually has.
+For detailed information about this project, refer to the following internal documentation.
 
 - **Repository overview:** See `README.md` for a general project description.
-- **Product or design docs:** `{{path to product requirements, design docs, or architecture notes, if this project has them}}`
-
-<!-- OPTIONAL: controlled vocabularies pattern
-- **Controlled vocabularies:** If the project has fixed ID/string tables (enum-like values that ship in a public format, a database, or an API contract), point to where they're defined here. Note explicitly whether IDs are permanent once shipped and never reused, since that constraint changes how an AI assistant should approach schema changes.
--->
-
-- **Any other related docs:** Refer to any other docs in the `docs/` folder for additional architecture context, if present.
+- **Product or design docs:** [v1.0 product requirements](docs/_planning/v1.0-product-requirements-doc.md), [design document](docs/_planning/v1.0-design-doc.md), and [interactive mockup](docs/_planning/v1.0-gui-mockup.html).
 
 ## Repository overview
 
-{{PROJECT_NAME}} is {{a one- or two-sentence description of what this project is and who it's for}}.
+Japan Purchasing Power Calculator is an English-language web calculator for visitors and residents comparing purchases in Japan against monthly take-home pay in Japan and another currency. It leads with an income-based equivalent cost and shows exchange-rate conversion separately.
 
 ### Key components
 
-{{Describe the major pieces of the system—e.g. "a CLI", "a REST API and a web frontend", "a single-target mobile app"—and how they relate.}}
+The repository currently contains planning documents and a standalone HTML/CSS/JavaScript mockup, not a production app or package manifest. The planned app uses HTML, CSS, TypeScript, and Vite, with a pure calculation module, in-memory form state, and a same-origin ECB rate snapshot refreshed by GitHub Actions and deployed to GitHub Pages.
 
 ### Architecture patterns
 
-{{Describe the architectural rules an AI assistant should never violate: the data model, what talks to what, what must never happen (e.g. "no direct database access from the frontend", "all writes go through the queue"). Concrete, load-bearing constraints belong here, but general good practice does not.}}
+Keep income-based equivalence independent of exchange rates: `(priceJpy / japanMonthly) * comparisonMonthly`. Convert currency with `priceJpy * (target units per EUR / JPY per EUR)`. Round only for display, and preserve independently computable results when other inputs or rates are missing. Keep comparison incomes keyed by currency for the visit.
+
+Production rates must be fetched and validated in CI from the ECB and served from the same origin; a failed refresh must stop publication. Show the source and publication date, flag snapshots older than seven calendar days, and resolve assets through Vite’s base URL for both root and project Pages paths. The mockup’s keyless Frankfurter request and bundled fallback are prototype behavior, not the production data pipeline.
 
 ## Development workflow
 
@@ -48,10 +40,6 @@ Follow these guidelines to maintain code quality and project consistency.
 ### Issue creation guidelines
 
 When creating a GitHub issue, provide clear descriptions of bugs or feature requests including steps to reproduce, expected vs. actual behavior, environment details, and relevant logs.
-
-<!-- OPTIONAL: requirement-ID cross-referencing pattern
-For features, describe the user need and reference the relevant requirement ID (e.g. a PRD/spec identifier like FR-9) if the project tracks requirements that way. Propose a solution.
--->
 
 Every issue must include a **Model** and **Review effort** annotation in the format described in [Model and effort selection](#model-and-effort-selection) below, so anyone picking up the issue knows the recommended reasoning capacity before starting work.
 
@@ -116,37 +104,13 @@ PR titles follow the same verb-first convention as commit messages (for example,
 
 ### Code standards
 
-Follow idiomatic conventions for {{primary language(s)}} with consistent indentation and naming. {{Add any project-specific style targets here, such as a design language, minimum platform version, compatibility target, accessibility baseline, or performance budget. Delete this sentence if there is nothing beyond standard idiomatic style.}}
+Use idiomatic HTML, CSS, JavaScript for the mockup and TypeScript for the planned app. Follow the design document’s crimson palette, currency formatting, numeric validation, and English UI text. Support a 320 CSS-pixel viewport, keyboard navigation, visible focus, field labels, inline errors, and polite result announcements. Support System, Light, and Dark appearance, live system changes, and unavailable browser storage.
 
-<!-- OPTIONAL: accessibility and internationalization pattern
-Every screen must remain fully legible under the platform's accessibility display modes (reduced transparency/motion, high contrast) and must support user-adjustable text size and screen readers. If the interface ships in more than one language, treat all shipped locales as equal-quality, not a primary language plus a translation pass. Never hardcode user-facing strings.
--->
+Current checks (Python 3 and Node.js required): `python3 scripts/check_repository.py lint` and `python3 scripts/check_repository.py mockup`. These check repository consistency and inline JavaScript syntax; they are not application tests. No production build, test suite, or linter has been configured. Add commands here and update CI when the Vite app is implemented.
 
 ## Privacy and security considerations
 
-This section is optional. Keep it only if the project has hard, load-bearing constraints an AI assistant could otherwise violate by accident (a wire-format boundary, a "never call this API" rule, a metadata-stripping step); otherwise delete the whole section, including this paragraph. The commented block below is a worked example to adapt.
-
-<!-- OPTIONAL: privacy and security worked example
-
-Treat privacy as a top constraint, not a feature to add later, if it is materially important to this product.
-
-### The no-server rule (example pattern)
-
-If this project is meant to be local-first or offline-first, state explicitly what that rules out: no developer-operated backend, no account system, no analytics SDK, no third-party network call. Any feature design that violates this is out of scope by definition, not a cost trade-off.
-
-### Sensitive input handling (example pattern)
-
-If the project imports user media or personal data, name the specific stripping/sanitization step that must never regress (e.g. "photos are re-encoded to strip EXIF/GPS on import, never byte-copied") and why it matters. A "safe" default that's invisible unless deliberately checked is exactly the kind of thing worth calling out here.
-
-### The wire boundary (example pattern)
-
-If there's a public/exported data format that's a strict subset of the internal model, name both types and state the rule in one sentence: which fields may never appear on the wire, and that the mapping between the two types must stay explicit and hand-written rather than derived automatically.
-
-### AI grounding (example pattern)
-
-If the project has AI/LLM features, state what they must never do—e.g. "must never invent details not present in the source data"—and where in the docs the grounding/verification rules live.
-
--->
+Purchase and income inputs stay in memory for the current browser session. Do not persist them or send them in requests, URLs, logs, analytics, or crash reports. Only the theme preference may be stored in browser storage. The calculation requires no account or personal data collection. Review network changes against the design document; distinguish the mockup’s currency-only rate request from production’s same-origin snapshot.
 
 ## Writing style
 

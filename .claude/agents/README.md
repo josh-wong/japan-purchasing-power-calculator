@@ -1,6 +1,6 @@
-# Custom agents for {{PROJECT_NAME}}
+# Custom agents for Japan Purchasing Power Calculator
 
-This directory contains project-specific Claude Code subagents. They ship as generic skeletons; each one has `{{fill in}}` placeholders and `<!-- OPTIONAL -->` blocks that should be filled in or removed for this specific project. See the root [`README.md`](../../README.md) for the full customization instructions.
+This directory contains project-specific Claude Code subagents. They follow the current planning and mockup stage; production build and test commands must be added when the Vite app exists.
 
 ## Available agents
 
@@ -10,7 +10,7 @@ The following specialized agents help automate development workflows for this pr
 
 These agents handle compilation, code quality checks, and automated testing workflows.
 
-**builder:** Build specialist that compiles the project and builds it for different configurations. Handles build errors and dependency issues. Example usage: "Use builder to build the project in release mode"
+**builder:** Build specialist that compiles the project and builds it for different configurations. Handles build errors and dependency issues. Example usage: "Use builder to build the project in mockup validation"
 
 **lint-checker:** Code quality specialist that analyzes code for style violations and enforces coding standards. Example usage: "Use lint-checker to lint modified files"
 
@@ -24,17 +24,17 @@ These agents specialize in diagnosing failures and optimizing performance.
 
 **performance-profiler:** Performance specialist that profiles hot paths, startup time, and resource usage against the project's performance targets. Example usage: "Use performance-profiler to check performance with a large dataset"
 
-### Optional agents
+### Privacy review
 
-**privacy-auditor** *(optional – see the note at the top of its file)*: Privacy and security compliance specialist. Only keep this if privacy or data minimization is a real, load-bearing constraint for this project. Example usage: "Use privacy-auditor to audit this PR before merge"
+**privacy-auditor:** Verifies that financial inputs remain in memory and do not enter storage or network requests. Example usage: "Use privacy-auditor to audit this PR before merge"
 
 ### GitHub workflow
 
 These agents automate GitHub interactions while following project conventions and templates.
 
-**github-issue-creator:** GitHub workflow specialist that creates well-formed issues following the project template at `.github/ISSUE_TEMPLATE/standard-issue-template.md`. Example usage: "Use github-issue-creator to file a bug for the login timeout"
+**github-issue-creator:** GitHub workflow specialist that creates well-formed issues following the project template at `.github/ISSUE_TEMPLATE/standard-issue-template.md`. Example usage: "Use github-issue-creator to file a bug for the incorrect income equivalent"
 
-**pr-creator:** Pull request specialist that creates well-structured PRs with clear descriptions and testing notes, following the PR template. Example usage: "Use pr-creator to open a PR for the search feature"
+**pr-creator:** Pull request specialist that creates well-structured PRs with clear descriptions and testing notes, following the PR template. Example usage: "Use pr-creator to open a PR for the currency picker"
 
 ## How to use agents
 
@@ -46,19 +46,19 @@ To explicitly use a specific agent, include the agent name in your request using
 
 **Building and testing:**
 
-- "Use the builder to build the app in debug configuration"
+- "Use the builder to build the app in mockup syntax validation"
 - "Use the test-runner to run all unit tests and report failures"
-- "Use the lint-checker to analyze code quality in the auth module"
+- "Use the lint-checker to analyze code quality in the calculator files"
 
 **Debugging and performance:**
 
-- "Use the debugger to analyze why the login flow keeps timing out"
-- "Use the performance-profiler to check scroll performance with a large dataset"
+- "Use the debugger to analyze why the currency restoration fails"
+- "Use the performance-profiler to check input and rendering performance"
 
 **GitHub workflows:**
 
-- "Use the github-issue-creator to file a bug for the incorrect timestamp"
-- "Use the pr-creator to open a pull request for the search feature"
+- "Use the github-issue-creator to file a bug for the missing rate date"
+- "Use the pr-creator to open a pull request for the currency picker"
 
 ### Automatic agent selection
 
@@ -70,7 +70,7 @@ To see all available agents in your session, use the `/agents` command. This dis
 
 ## Agent design philosophy
 
-These agents are meant to encode this project's specific, non-obvious constraints—the things a generic assistant would get wrong by default, not general good practice it already knows. Fill in each agent's placeholders with the project's real build/test/lint commands and its load-bearing architectural rules, and delete any optional agent that doesn't apply.
+These agents are meant to encode this project's specific, non-obvious constraints—the things a generic assistant would get wrong by default, not general good practice it already knows. Update agent commands as the production toolchain is implemented; do not report mockup syntax checks as application tests.
 
 ## Customization
 

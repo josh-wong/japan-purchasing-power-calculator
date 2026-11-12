@@ -20,13 +20,9 @@ Issue creation guidelines:
 
 - Use conventional format: "[Feature|Bug|Docs]: Brief description"
 - Include issue type label (feature, bug, documentation, enhancement)
-- Add component labels relevant to this project (`{{fill in—e.g. "api, frontend, auth, infra"}}`)
+- Add component labels relevant to this project (calculation, form state, rates, appearance, accessibility, or CI; use only labels that exist in the repository)
 - For bugs: reproduction steps, expected behavior, actual behavior, environment details
 - For features: use case and acceptance criteria
-
-<!-- OPTIONAL: requirement-ID cross-referencing pattern
-- If this project tracks requirements in a PRD/spec with stable IDs, reference the relevant requirement ID (e.g. FR-9) when one exists.
--->
 
 - Reference related issues or PRs when relevant
 - Include a "Model and review effort" section stating the recommended model and effort in the format "Model: Sonnet | Review effort: medium" (see AGENTS.md "Model and effort selection" for the Sonnet/Opus and low/medium/high guidance)
@@ -41,3 +37,5 @@ Issue quality checklist:
 - Linked to related work when applicable
 
 Create issues that help the team understand scope and context.
+
+Read the v1.0 PRD and design document under `docs/_planning/`. Reference the relevant section; the requirements do not currently have stable IDs. Distinguish current mockup validation from future production build and test coverage. Follow all sections and checklist items in the applicable GitHub template, and retain the AI co-author trailer required by `AGENTS.md` when committing.

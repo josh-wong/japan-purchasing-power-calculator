@@ -18,7 +18,7 @@ When invoked to create a pull request:
 
 PR creation guidelines:
 
-- Title format (starting with a verb): "Brief description" (e.g., "Add breed-based size prefill")
+- Title format (starting with a verb): "Brief description" (e.g., "Fix income-based equivalent calculation")
 - Summary includes: what changed, why it changed, how it works
 - List all modified files by category (Features, Fixes, Refactoring, Tests, Docs)
 - Document testing approach (unit tests, manual testing, offline testing, edge cases)
@@ -42,11 +42,6 @@ Commit message validation:
 - Focus on functionality, not development process
 - Reference issue numbers when applicable
 
-<!-- OPTIONAL: name this project's specific breaking-change surfaces here, the way the original template called out its schema version and wire-format version. For example:
-For this project's PRs:
-- Note whether the change touches `{{schema/version identifier}}` and describe the migration or backward-compatibility handling
-- Confirm any new or changed field is correctly present or absent from `{{the project's exported/wire type}}` depending on whether it's meant to be shared
-- Call out new or changed localized strings, if the project supports multiple locales
--->
-
 Create PRs that make review efficient and merge decisions confident.
+
+Read the v1.0 PRD and design document under `docs/_planning/`. Reference the relevant section; the requirements do not currently have stable IDs. Distinguish current mockup validation from future production build and test coverage. Follow all sections and checklist items in the applicable GitHub template, and retain the AI co-author trailer required by `AGENTS.md` when committing.
