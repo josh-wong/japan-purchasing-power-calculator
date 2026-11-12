@@ -1,0 +1,58 @@
+# Secrets
+.env
+.env.*
+Secrets.plist
+*.pem
+*.key
+
+# IDE and editor config
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# TEMPLATE NOTE:
+# - Keep only sections that apply to this project.
+# - Remove unused examples after setup.
+# - Exclude dependency/build output so Copilot spends context on source files.
+
+# TEMPLATE: add this project's actual build-artifact and dependency
+# directories below so Copilot doesn't waste context reading them.
+# Examples (uncomment/adapt as needed):
+#
+# Node:
+#   node_modules/
+#   dist/
+#   build/
+#
+# Python:
+#   __pycache__/
+#   .venv/
+#
+# Swift / Xcode:
+#   DerivedData/
+#   .build/
+#   .swiftpm/
+#   Package.resolved
+#   *.xcuserstate
+#   xcuserdata/
+#
+# Rust:
+#   target/
+#
+# Java / Kotlin:
+#   .gradle/
+#   build/
+#   out/
+#
+# .NET:
+#   bin/
+#   obj/

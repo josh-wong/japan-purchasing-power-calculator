@@ -1,0 +1,63 @@
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+Secrets.plist
+
+# IDE and editor config
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# TEMPLATE NOTE:
+# - Keep only the sections that apply to this project.
+# - Remove the rest after setup so ignore rules stay easy to maintain.
+# - Mirror relevant entries in .claudeignore and .copilotignore so AI tools avoid generated files and dependency caches.
+
+# TEMPLATE: add this project's actual build-artifact directories below.
+# Examples (uncomment/adapt as needed):
+#
+# Node:
+#   node_modules/
+#   dist/
+#   build/
+#   .next/
+#
+# Python:
+#   __pycache__/
+#   *.pyc
+#   .venv/
+#   dist/
+#
+# Swift / Xcode:
+#   DerivedData/
+#   .build/
+#   .swiftpm/
+#   Package.resolved
+#   *.xcuserstate
+#   xcuserdata/
+#
+# Go:
+#   /bin/
+#
+# Rust:
+#   target/
+#
+# Java / Kotlin:
+#   .gradle/
+#   build/
+#   out/
+#
+# .NET:
+#   bin/
+#   obj/
