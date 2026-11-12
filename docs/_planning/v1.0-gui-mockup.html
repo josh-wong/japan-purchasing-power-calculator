@@ -513,6 +513,16 @@
 
     function showHomeField() {
       const currency = currencyField.value;
+      if (!homePayByCurrency.has(currency)) {
+        const units = savedRates.unitsPerEuro[currency];
+        const usd = savedRates.unitsPerEuro.USD;
+        const defaultIncome = Number(homeField.defaultValue.replaceAll(',', ''));
+        const convertedIncome = units && usd ? defaultIncome * units / usd : null;
+        const increment = convertedIncome !== null && convertedIncome >= 100_000 ? 10_000 : 1_000;
+        const value = convertedIncome === null ? ''
+          : wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
+        homePayByCurrency.set(currency, value);
+      }
       homeField.value = homePayByCurrency.get(currency) ?? '';
       byId('home-label').textContent = `Comparison income (${currency})`;
       byId('home-prefix').textContent = moneySymbol(currency);

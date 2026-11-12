@@ -31,7 +31,7 @@ it('renders the default fixture and all nine presets', () => {
 it('restores income per currency and resets the scenario', () => {
   change('home', '4321.12');
   change('currency', 'EUR', 'change');
-  expect(field('home').value).toBe('');
+  expect(field('home').value).toBe('4,000');
   change('home', '1234');
   change('currency', 'USD', 'change');
   expect(field('home').value).toBe('4321.12');
@@ -41,6 +41,21 @@ it('restores income per currency and resets the scenario', () => {
   expect(field('currency').value).toBe('USD');
   expect(field('equivalent').textContent).toBe('US$80.00');
   change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('4,000');
+});
+it('prefills every comparison currency and preserves an intentionally cleared income', () => {
+  for (const option of field('currency').options) {
+    change('currency', option.value, 'change');
+    expect(field('home').value).not.toBe('');
+    const amount = Number(field('home').value.replaceAll(',', ''));
+    expect(amount % (amount >= 100_000 ? 10_000 : 1_000)).toBe(0);
+    expect(field('home').getAttribute('aria-invalid')).toBe('false');
+  }
+  change('currency', 'KRW', 'change');
+  expect(field('home').value).toBe('5,350,000');
+  change('home', '');
+  change('currency', 'USD', 'change');
+  change('currency', 'KRW', 'change');
   expect(field('home').value).toBe('');
 });
 it('preserves fractional yen on blur and announces after a pause', () => {
