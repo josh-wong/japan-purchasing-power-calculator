@@ -44,6 +44,7 @@ function formatMoney(amount: number, currency: string, precision = 0) {
   const symbol = currencySymbols[currency];
   if (!symbol) return formatter.format(amount);
   return formatter.formatToParts(amount)
+    .filter((part) => part.type !== 'literal' || part.value.trim() !== '')
     .map((part) => part.type === 'currency' ? symbol : part.value)
     .join('');
 }

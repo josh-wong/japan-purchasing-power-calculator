@@ -86,3 +86,12 @@ it('formats small and large percentages and currency precision', () => {
   change('currency', 'CHF', 'change');
   expect(field('home-prefix').textContent).toBe('CHF');
 });
+
+it('joins dollar symbols to amounts and keeps spacing after currency codes', () => {
+  change('currency', 'SGD', 'change');
+  expect(field('equivalent').textContent).toBe('S$120.00');
+  expect(field('converted').textContent).toMatch(/^S\$\d/);
+  expect(field('home-share-note').textContent).toBe('Of S$6,000.00');
+  change('currency', 'CHF', 'change');
+  expect(field('equivalent').textContent).toBe('CHF\u00a080.00');
+});
