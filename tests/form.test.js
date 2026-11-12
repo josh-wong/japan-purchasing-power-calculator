@@ -22,12 +22,11 @@ it('renders the default fixture and all nine presets', () => {
   expect(field('preset').options.length).toBe(10);
   change('preset', '100000', 'change');
   expect(field('price').value).toBe('100,000');
-  expect(field('price-note').textContent).toContain('four people');
   change('preset', '200000', 'change');
-  expect(field('price-note').textContent).toContain('monitor');
+  expect(field('price').value).toBe('200,000');
   change('price', '200001');
   expect(field('preset').value).toBe('');
-  expect(field('price-note').hidden).toBe(true);
+  expect(field('example-disclaimer').textContent).toBe('These are example prices. Actual prices vary.');
 });
 it('restores income per currency and resets the scenario', () => {
   change('home', '4321.12');

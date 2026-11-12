@@ -9,8 +9,6 @@ function byId(id: string): HTMLElement {
 }
 const presetField = byId('preset') as HTMLSelectElement;
 const priceField = byId('price') as HTMLInputElement;
-const priceNote = byId('price-note');
-const defaultPriceNote = priceNote.textContent;
 const defaultPreset = priceField.defaultValue.replaceAll(',', '');
 const wholeNumberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const japanField = byId('japan') as HTMLInputElement;
@@ -105,8 +103,6 @@ function render(announce = true) {
   showError(homeField, home.error);
 
   if (presetField.value !== '' && price.amount !== Number(presetField.value)) presetField.value = '';
-  priceNote.hidden = presetField.value === '';
-  priceNote.textContent = presetField.selectedOptions[0]?.dataset.note ?? defaultPriceNote;
 
   const rate = rateFor(currency);
   const { japanShare, converted, homeShare, equivalent } = calculate(price.amount, japan.amount, home.amount, rate?.yenPerUnit ?? null);
@@ -129,7 +125,6 @@ function render(announce = true) {
   }
 
   byId('equivalent').textContent = equivalentText;
-  byId('equivalent').classList.toggle('long', equivalentText.length > 10);
   byId('result-note').textContent = resultNote;
   byId('converted').textContent = convertedText;
   byId('rate-note').textContent = rate?.note ?? ' · Exchange rate unavailable';

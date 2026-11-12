@@ -91,7 +91,7 @@
 
         <div class="preset-field">
           <label class="field-label" for="preset">Try an example</label>
-          <select id="preset" aria-describedby="price-note">
+          <select id="preset" aria-describedby="example-disclaimer">
             <option value="" disabled hidden>Choose an example</option>
             <option value="1000">Casual lunch · JP¥1,000</option>
             <option value="2000">Box of Japanese sweets · JP¥2,000</option>
@@ -100,9 +100,10 @@
             <option value="15000">Shinkansen ticket (one way) · JP¥15,000</option>
             <option value="30000">Rice cooker · JP¥30,000</option>
             <option value="60000">Hotel stay (three nights) · JP¥60,000</option>
-            <option value="100000" data-note="Example total for four people on a full-day tour with a private driver. Actual prices vary.">Private sightseeing tour (four people) · JP¥100,000</option>
-            <option value="200000" data-note="Example price for a desktop PC with 8 GB of graphics memory. The monitor still costs extra.">Gaming PC (8 GB VRAM) · JP¥200,000</option>
+            <option value="100000">Private sightseeing tour (four people) · JP¥100,000</option>
+            <option value="200000">Gaming PC (8 GB VRAM) · JP¥200,000</option>
           </select>
+          <p id="example-disclaimer" class="field-note">These are example prices. Actual prices vary.</p>
         </div>
 
         <div class="form-row price-row">
@@ -129,7 +130,6 @@
               <option value="CHF">CHF · Swiss Franc</option>
             </select>
           </div>
-          <p id="price-note" class="field-note price-note">These are example prices. Actual prices vary.</p>
         </div>
 
         <fieldset class="pay-fields" aria-describedby="pay-help">

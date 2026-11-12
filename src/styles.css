@@ -112,14 +112,12 @@
     .help, .field-note, .error { font-size: .875rem; line-height: 1.4; }
     .help, .field-note { color: var(--muted); }
     .help, .field-note, .error { margin-top: .42rem; }
-    .price-note { grid-column: 1 / -1; margin-top: 0; }
     .error { color: var(--accent-ink); }
 
     .result { overflow: hidden; }
     .result-main { padding: clamp(1.2rem, 4vw, 2.1rem); background: var(--result-surface); color: #fff; }
     .result-main h2 { color: #ffe7eb; font-size: 1.02rem; letter-spacing: 0; }
-    .hero-amount { margin-block: .75rem .6rem; color: #fff; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1; font-weight: 760; letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
-    .hero-amount.long { font-size: clamp(1.55rem, 4vw, 2.65rem); letter-spacing: -.035em; }
+    .hero-amount { margin-block: .75rem .6rem; color: #fff; font-size: clamp(1.55rem, 4vw, 2.65rem); line-height: 1; font-weight: 760; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
     .result-main .metric-note { max-width: 46ch; color: #ffe7eb; font-size: .94rem; line-height: 1.52; }
     .share-section { border-top: 1px solid var(--border); }
     .pay-shares { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0; }
@@ -159,7 +157,6 @@
       @supports (grid-template-rows: subgrid) {
         .form-row { grid-template-rows: repeat(3, auto); row-gap: 0; }
         .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 3; }
-        .price-note { margin-top: .45rem; }
       }
     }
 

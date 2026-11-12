@@ -166,14 +166,12 @@
     .help, .field-note, .error { font-size: .875rem; line-height: 1.4; }
     .help, .field-note { color: var(--muted); }
     .help, .field-note, .error { margin-top: .42rem; }
-    .price-note { grid-column: 1 / -1; margin-top: 0; }
     .error { color: var(--accent-ink); }
 
     .result { overflow: hidden; }
     .result-main { padding: clamp(1.2rem, 4vw, 2.1rem); background: var(--result-surface); color: #fff; }
     .result-main h2 { color: #ffe7eb; font-size: 1.02rem; letter-spacing: 0; }
-    .hero-amount { margin-block: .75rem .6rem; color: #fff; font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1; font-weight: 760; letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
-    .hero-amount.long { font-size: clamp(1.55rem, 4vw, 2.65rem); letter-spacing: -.035em; }
+    .hero-amount { margin-block: .75rem .6rem; color: #fff; font-size: clamp(1.55rem, 4vw, 2.65rem); line-height: 1; font-weight: 760; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
     .result-main .metric-note { max-width: 46ch; color: #ffe7eb; font-size: .94rem; line-height: 1.52; }
     .share-section { border-top: 1px solid var(--border); }
     .pay-shares { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0; }
@@ -213,7 +211,6 @@
       @supports (grid-template-rows: subgrid) {
         .form-row { grid-template-rows: repeat(3, auto); row-gap: 0; }
         .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 3; }
-        .price-note { margin-top: .45rem; }
       }
     }
 
@@ -261,7 +258,7 @@
 
         <div class="preset-field">
           <label class="field-label" for="preset">Try an example</label>
-          <select id="preset" aria-describedby="price-note">
+          <select id="preset" aria-describedby="example-disclaimer">
             <option value="" disabled hidden>Choose an example</option>
             <option value="1000">Casual lunch · JP¥1,000</option>
             <option value="2000">Box of Japanese sweets · JP¥2,000</option>
@@ -270,9 +267,10 @@
             <option value="15000">Shinkansen ticket (one way) · JP¥15,000</option>
             <option value="30000">Rice cooker · JP¥30,000</option>
             <option value="60000">Hotel stay (three nights) · JP¥60,000</option>
-            <option value="100000" data-note="Example total for four people on a full-day tour with a private driver. Actual prices vary.">Private sightseeing tour (four people) · JP¥100,000</option>
-            <option value="200000" data-note="Example price for a desktop PC with 8 GB of graphics memory. The monitor still costs extra.">Gaming PC (8 GB VRAM) · JP¥200,000</option>
+            <option value="100000">Private sightseeing tour (four people) · JP¥100,000</option>
+            <option value="200000">Gaming PC (8 GB VRAM) · JP¥200,000</option>
           </select>
+          <p id="example-disclaimer" class="field-note">These are example prices. Actual prices vary.</p>
         </div>
 
         <div class="form-row price-row">
@@ -299,7 +297,6 @@
               <option value="CHF">CHF · Swiss Franc</option>
             </select>
           </div>
-          <p id="price-note" class="field-note price-note">These are example prices. Actual prices vary.</p>
         </div>
 
         <fieldset class="pay-fields" aria-describedby="pay-help">
@@ -393,8 +390,6 @@
     const byId = (id) => document.getElementById(id);
     const presetField = byId('preset');
     const priceField = byId('price');
-    const priceNote = byId('price-note');
-    const defaultPriceNote = priceNote.textContent;
     const defaultPreset = priceField.defaultValue.replaceAll(',', '');
     const wholeNumberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
     const japanField = byId('japan');
@@ -542,8 +537,6 @@
       showError(homeField, home.error);
 
       if (presetField.value !== '' && price.amount !== Number(presetField.value)) presetField.value = '';
-      priceNote.hidden = presetField.value === '';
-      priceNote.textContent = presetField.selectedOptions[0]?.dataset.note ?? defaultPriceNote;
 
       const rate = rateFor(currency);
       const japanShare = price.amount !== null && japan.amount !== null ? price.amount / japan.amount : null;
@@ -569,7 +562,6 @@
       }
 
       byId('equivalent').textContent = equivalentText;
-      byId('equivalent').classList.toggle('long', equivalentText.length > 10);
       byId('result-note').textContent = resultNote;
       byId('converted').textContent = convertedText;
       byId('rate-note').textContent = rate?.note ?? ' · Exchange rate unavailable';
