@@ -29,16 +29,15 @@
 - [ ] Tested core functionality works as expected
 - [ ] Tested edge cases and error handling
 - [ ] Unit tests added or updated (if applicable)
-<!-- OPTIONAL: platform/accessibility/localization testing pattern. Uncomment and adapt the items that apply to this project, delete the rest. Keep retained checklist items directly adjacent to the standard checklist with no blank line.
-- [ ] Tested with no network connection
+- [ ] Tested with no network connection and stale or unavailable rates
 - [ ] Tested in light mode
 - [ ] Tested in dark mode
-- [ ] Tested with reduced transparency / high contrast display settings
+- [ ] Tested with high contrast display settings
 - [ ] Tested with larger accessibility text sizes
 - [ ] Tested with a screen reader
-- [ ] Tested in all supported locales
-- [ ] Tested on a physical device (if the target platform behaves differently than its simulator/emulator)
--->
+- [ ] Tested at 320 CSS pixels and with keyboard navigation
+- [ ] Tested System appearance changes and browser-storage failure handling
+- [ ] Tested root and project GitHub Pages asset paths
 
 ## Privacy and security considerations
 
@@ -46,11 +45,7 @@
 - [ ] No new data leaves the system without updating any relevant user-facing disclosure
 - [ ] No new network calls, telemetry, analytics SDK, or crash reporter added without review
 - [ ] Error messages and logs don't leak sensitive data
-<!-- OPTIONAL: wire-boundary / sensitive-input pattern. Keep and adapt if this project has an exported/wire type distinct from its internal model, or handles sensitive media/PII on import. Keep retained checklist items directly adjacent to the standard checklist with no blank line.
-- [ ] The exported/wire format still contains no fields meant to stay private.
-- [ ] Sensitive input (photos, location, etc.) is still sanitized on import as required.
-- [ ] Any AI-generated output stays grounded in real data—no invented facts.
--->
+- [ ] Purchase and income inputs remain in memory and are excluded from storage and network requests
 
 ## Code quality
 

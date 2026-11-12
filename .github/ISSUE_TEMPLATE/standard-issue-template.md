@@ -3,7 +3,7 @@ name: Standard issue template
 about: For standard issues
 title: ''
 labels: ''
-assignees: ''
+assignees: 'josh-wong'
 
 ---
 

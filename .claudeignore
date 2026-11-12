@@ -19,40 +19,12 @@ temp/
 *.tmp
 *.log
 
-# TEMPLATE NOTE:
-# - Keep only sections that apply to this project.
-# - Remove unused examples after setup.
-# - Exclude dependency/build output so Claude spends context on source files.
+# Vite dependencies and generated output
+node_modules/
+dist/
+.vite/
+coverage/
 
-# TEMPLATE: add this project's actual build-artifact and dependency
-# directories below so the AI assistant doesn't waste context reading them.
-# Examples (uncomment/adapt as needed):
-#
-# Node:
-#   node_modules/
-#   dist/
-#   build/
-#
-# Python:
-#   __pycache__/
-#   .venv/
-#
-# Swift / Xcode:
-#   DerivedData/
-#   .build/
-#   .swiftpm/
-#   Package.resolved
-#   *.xcuserstate
-#   xcuserdata/
-#
-# Rust:
-#   target/
-#
-# Java / Kotlin:
-#   .gradle/
-#   build/
-#   out/
-#
-# .NET:
-#   bin/
-#   obj/
+# Python validation cache
+__pycache__/
+*.pyc

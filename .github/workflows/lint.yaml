@@ -1,23 +1,10 @@
-# lint.yaml
-#
-# TEMPLATE: this workflow is a skeleton. Fill in the linter for this
-# project's language, then delete this comment block. See the root
-# README.md for the AI-assistant instructions that cover this file.
 name: Lint
 
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '*.md'
   push:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '*.md'
 
 concurrency:
   group: lint-${{ github.ref }}
@@ -27,33 +14,15 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    runs-on: ubuntu-slim # Use ubuntu-slim for cost savings. Change only if this project needs macos-* (e.g. SwiftLint) or windows-*. For most linters, ubuntu-slim + explicit tool setup is faster and cheaper than ubuntu-latest.
+  check:
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # AI AGENT GUIDANCE: Replace the steps below with the project's real linter.
-      # Since we're using ubuntu-slim, make sure to explicitly set up any required tools.
-      # Most setup actions (setup-node, setup-python, etc.) work fine on ubuntu-slim.
-      # Examples:
-      #
-      # ESLint (Node):
-      #   - uses: actions/setup-node@v4
-      #     with:
-      #       node-version: 22
-      #   - run: npm ci
-      #   - run: npx eslint .
-      #
-      # Ruff (Python):
-      #   - uses: astral-sh/ruff-action@v3
-      #
-      # golangci-lint (Go):
-      #   - uses: golangci/golangci-lint-action@v6
-      #
-      # SwiftLint (requires runs-on: macos-latest, not ubuntu-slim):
-      #   - run: brew install swiftlint
-      #   - run: swiftlint lint
-      - name: Lint
-        run: echo "TODO - replace with this project's real lint command" && exit 1
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run lint
+        run: python3 scripts/check_repository.py lint
