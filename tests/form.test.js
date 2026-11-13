@@ -44,6 +44,43 @@ it('restores income per currency and resets the scenario', () => {
   change('currency', 'EUR', 'change');
   expect(field('home').value).toBe('4,000');
 });
+it('tracks example-income guidance per currency until editing and restores it on reset', () => {
+  expect(field('home-example').hidden).toBe(false);
+  expect(field('home').getAttribute('aria-describedby').split(' ')).toContain('home-example');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('home-example').hidden).toBe(false);
+  change('home', '4321.12');
+  expect(field('home-example').hidden).toBe(true);
+  expect(field('home').getAttribute('aria-describedby').split(' ')).not.toContain('home-example');
+  change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('4,000');
+  expect(field('home-example').hidden).toBe(false);
+  change('currency', 'USD', 'change');
+  expect(field('home').value).toBe('4321.12');
+  expect(field('home-example').hidden).toBe(true);
+  change('currency', 'EUR', 'change');
+  expect(field('home-example').hidden).toBe(false);
+  change('home', '');
+  expect(field('home-example').hidden).toBe(true);
+  change('currency', 'USD', 'change');
+  change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('');
+  expect(field('home-example').hidden).toBe(true);
+  field('reset').click();
+  expect(field('home-example').hidden).toBe(false);
+  change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('4,000');
+  expect(field('home-example').hidden).toBe(false);
+});
+it('explains the same share using the entered price without rounding fractional yen away', () => {
+  expect(field('result-note').textContent).toBe('JP¥5,000 is about 2% of the Japan income. The same share of the comparison income is US$80.00.');
+  change('price', '.01');
+  expect(field('result-note').textContent).toBe('JP¥0.01 is less than 0.01% of the Japan income. The same share of the comparison income is US$0.00.');
+  change('price', '0');
+  expect(field('result-note').textContent).toBe('JP¥0 is 0% of the Japan income. The same share of the comparison income is US$0.00.');
+  change('price', '500000');
+  expect(field('result-note').textContent).toBe('JP¥500,000 is about 200% of the Japan income. The same share of the comparison income is US$8,000.00.');
+});
 it('prefills every comparison currency and preserves an intentionally cleared income', () => {
   for (const option of field('currency').options) {
     change('currency', option.value, 'change');
@@ -100,7 +137,7 @@ it('preserves fractional yen on blur and announces after a pause', () => {
   expect(field('price').value).toBe('5,000.5');
   expect(field('result-announcement').textContent).toBe('');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost based on income US$80.01. Price at the exchange rate US$31.40.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of pay US$80.01. Price at the exchange rate US$31.40.');
 });
 it('announces the missing-income prompt while keeping the available converted price', () => {
   change('japan', '');

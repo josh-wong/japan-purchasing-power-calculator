@@ -210,8 +210,8 @@
 
     @media (width > 380px) {
       @supports (grid-template-rows: subgrid) {
-        .form-row { grid-template-rows: repeat(3, auto); row-gap: 0; }
-        .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 3; }
+        .form-row { grid-template-rows: repeat(4, auto); row-gap: 0; }
+        .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 4; }
       }
     }
 
@@ -317,8 +317,9 @@
               <label id="home-label" class="field-label" for="home">Comparison income (USD)</label>
               <div class="input-shell">
                 <span class="prefix" id="home-prefix" aria-hidden="true">US$</span>
-                <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format home-error">
+                <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format home-example home-error">
               </div>
+              <p id="home-example" class="field-note">Example income—edit to match your pay.</p>
               <p id="home-error" class="error" hidden></p>
             </div>
           </div>
@@ -328,9 +329,9 @@
 
       <section class="panel result" aria-labelledby="result-title">
         <div class="result-main">
-          <h2 id="result-title">Equivalent cost based on income</h2>
+          <h2 id="result-title">Same share of pay</h2>
           <p id="equivalent" class="hero-amount">US$80.00</p>
-          <p id="result-note" class="metric-note">This purchase takes about 2% of the monthly pay entered for Japan. That’s like spending US$80.00 from the comparison income.</p>
+          <p id="result-note" class="metric-note">JP¥5,000 is about 2% of the Japan income. The same share of the comparison income is US$80.00.</p>
         </div>
         <div class="metric">
           <h3>Price at the exchange rate</h3>
@@ -338,13 +339,14 @@
           <p class="metric-note"><a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer" aria-label="ECB reference rates (opens in a new tab)">ECB reference rates</a><span id="rate-note"> · November 11, 2026 · Saved</span></p>
         </div>
         <section class="share-section" aria-labelledby="share-title">
-          <h3 id="share-title">Percentage of monthly take-home pay at the exchange rate</h3>
+          <h3 id="share-title">Share of monthly take-home pay</h3>
           <dl class="pay-shares">
             <div class="metric">
               <dt>Japan income</dt>
               <dd>
                 <p class="metric-value" id="japan-share">2%</p>
                 <p class="metric-note" id="japan-share-note">Of JP¥250,000</p>
+                <p class="metric-note">Yen price ÷ Japan income</p>
               </dd>
             </div>
             <div class="metric">
@@ -352,7 +354,7 @@
               <dd>
                 <p class="metric-value" id="home-share">0.79%</p>
                 <p class="metric-note" id="home-share-note">Of US$4,000.00</p>
-                <p class="metric-note">At the converted price</p>
+                <p class="metric-note">Converted price ÷ comparison income</p>
               </dd>
             </div>
           </dl>
@@ -404,6 +406,7 @@
     const currencyField = byId('currency');
     const defaultCurrency = 'USD';
     const homePayByCurrency = new Map([[defaultCurrency, homeField.defaultValue]]);
+    const exampleIncomeCurrencies = new Set([defaultCurrency]);
     const homeErrorByCurrency = new Map();
     const form = document.querySelector('form');
     const moneyFormatters = new Map();
@@ -529,6 +532,7 @@
         const value = convertedIncome === null ? ''
           : wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
         homePayByCurrency.set(currency, value);
+        if (value !== '') exampleIncomeCurrencies.add(currency);
       }
       homeField.value = homePayByCurrency.get(currency) ?? '';
       byId('home-label').textContent = `Comparison income (${currency})`;
@@ -547,6 +551,9 @@
 
     function render(announce = true) {
       const currency = currencyField.value;
+      const isExampleIncome = exampleIncomeCurrencies.has(currency);
+      byId('home-example').hidden = !isExampleIncome;
+      homeField.setAttribute('aria-describedby', `number-format${isExampleIncome ? ' home-example' : ''} home-error`);
       const price = parseAmount(priceField.value, true, 'JPY');
       const japan = parseAmount(japanField.value, false, 'JPY');
       const home = parseAmount(homeField.value, false, currency);
@@ -572,7 +579,7 @@
           const shareDescription = japanShare > 0 && japanShareText !== '<0.01%'
             ? `about ${japanShareText}`
             : spokenShare(japanShareText);
-          resultNote = `This purchase takes ${shareDescription} of the monthly pay entered for Japan. That’s like spending ${equivalentText} from the comparison income.`;
+          resultNote = `${formatMoney(price.amount, 'JPY', price.precision)} is ${shareDescription} of the Japan income. The same share of the comparison income is ${equivalentText}.`;
         }
       }
 
@@ -593,7 +600,7 @@
         clearTimeout(announcementTimer);
         announcementTimer = setTimeout(() => {
           const metrics = [
-            ['equivalent', 'Equivalent cost based on income'], ['converted', 'Price at the exchange rate'],
+            ['equivalent', 'Equivalent cost at the same share of pay'], ['converted', 'Price at the exchange rate'],
           ];
           const spokenResults = metrics.map(([id, label]) => {
             const value = byId(id).textContent;
@@ -608,7 +615,10 @@
     form.addEventListener('submit', (event) => event.preventDefault());
     form.addEventListener('input', (event) => {
       const field = event.target;
-      if (field === homeField) homePayByCurrency.set(currencyField.value, field.value);
+      if (field === homeField) {
+        homePayByCurrency.set(currencyField.value, field.value);
+        exampleIncomeCurrencies.delete(currencyField.value);
+      }
       if (field === priceField || field === japanField || field === homeField) {
         showError(field, '');
         render();
@@ -647,6 +657,8 @@
     byId('reset').addEventListener('click', () => {
       for (const field of [priceField, japanField, homeField]) showError(field, '');
       homePayByCurrency.clear();
+      exampleIncomeCurrencies.clear();
+      exampleIncomeCurrencies.add(defaultCurrency);
       homeErrorByCurrency.clear();
       homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
       presetField.value = defaultPreset;

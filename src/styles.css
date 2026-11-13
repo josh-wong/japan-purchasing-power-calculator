@@ -156,8 +156,8 @@
 
     @media (width > 380px) {
       @supports (grid-template-rows: subgrid) {
-        .form-row { grid-template-rows: repeat(3, auto); row-gap: 0; }
-        .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 3; }
+        .form-row { grid-template-rows: repeat(4, auto); row-gap: 0; }
+        .form-row > div { display: grid; grid-template-rows: subgrid; grid-row: span 4; }
       }
     }
 
