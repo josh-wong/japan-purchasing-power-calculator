@@ -36,11 +36,11 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Fetch and validate ECB rates
-        run: npm run rates:update
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Fetch and validate ECB rates
+        run: npm run rates:update
       - name: Warn when the analytics measurement ID is missing
         env:
           GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}

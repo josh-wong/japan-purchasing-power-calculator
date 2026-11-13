@@ -44,7 +44,7 @@ See the [product requirements](docs/_planning/v1.0-product-requirements-doc.md) 
 
 The calculator is published at `https://www.080f53.com/japan-purchasing-power-calculator/` through GitHub Pages, with **Settings → Pages → Source** set to **GitHub Actions**. `.github/workflows/pages.yml` builds and deploys on pushes to `main`, daily at 17:20 Europe/Brussels (after the ECB's usual publication), and on manual dispatch. Pull requests run only the lint and build-and-test workflows, which never publish.
 
-The build job runs `npm run rates:update`, lint, type-checking, and tests, then builds with the `/japan-purchasing-power-calculator/` base, confirms `dist/rates.json` exists, and uploads `dist/`. The deploy job runs only if the build job succeeds, so a failed fetch, validation, test, or build leaves the previously published site and snapshot in place. Runs share one concurrency group, so they never overlap.
+The build job runs lint, type-checking, and tests, then `npm run rates:update`, then builds with the `/japan-purchasing-power-calculator/` base, confirms `dist/rates.json` exists, and uploads `dist/`. The deploy job runs only if the build job succeeds, so a failed fetch, validation, test, or build leaves the previously published site and snapshot in place. Runs share one concurrency group, so they never overlap. GitHub keeps only one queued run, so a newer push can replace a queued scheduled run; the next daily run refreshes the snapshot.
 
 Set the `GA_MEASUREMENT_ID` repository variable (**Settings → Secrets and variables → Actions → Variables**) to enable analytics in the production build. Without it, the build succeeds with a warning and the site has no analytics.
 
