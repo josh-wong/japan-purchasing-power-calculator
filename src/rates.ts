@@ -7,16 +7,19 @@ export function ratesUrl(baseUrl: string = import.meta.env.BASE_URL): string {
   return `${baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`}rates.json`;
 }
 
+const requestTimeoutMs = 10_000;
+
 /**
  * Loads the validated snapshot, or null when the asset is missing, unreachable,
- * malformed, or fails validation. The request carries no user input.
+ * stalled past the timeout, malformed, or fails validation. The request carries no user input.
  */
 export async function loadRates(
   fetchImpl: FetchLike = (input, init) => fetch(input, init),
   baseUrl: string = import.meta.env.BASE_URL,
+  timeoutMs: number = requestTimeoutMs,
 ): Promise<RateSnapshot | null> {
   try {
-    const response = await fetchImpl(ratesUrl(baseUrl), { cache: 'no-cache', credentials: 'same-origin' });
+    const response = await fetchImpl(ratesUrl(baseUrl), { cache: 'no-cache', credentials: 'same-origin', signal: AbortSignal.timeout(timeoutMs) });
     if (!response.ok) return null;
     return validateSnapshot(await response.json());
   } catch {

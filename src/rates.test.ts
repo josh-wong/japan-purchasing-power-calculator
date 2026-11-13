@@ -27,7 +27,7 @@ describe('loading', () => {
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe(`${base}rates.json`);
     expect(url).not.toContain('?');
-    expect(init).toEqual({ cache: 'no-cache', credentials: 'same-origin' });
+    expect(init).toEqual({ cache: 'no-cache', credentials: 'same-origin', signal: expect.any(AbortSignal) });
     expect(init).not.toHaveProperty('body');
   });
 
@@ -41,5 +41,22 @@ describe('loading', () => {
     ['a snapshot with a bad rate', ok({ ...fixture, unitsPerEuro: { ...fixture.unitsPerEuro, USD: -2 } })],
   ] as [string, FetchLike][])('returns null for %s', async (_name, fetchImpl) => {
     expect(await loadRates(fetchImpl, '/')).toBeNull();
+  });
+});
+
+describe('stalled requests', () => {
+  const abortable = (signal: AbortSignal | null | undefined) => new Promise<never>((_resolve, reject) => {
+    signal?.addEventListener('abort', () => reject(signal.reason));
+  });
+
+  it('gives up on a request that never responds', async () => {
+    const started = Date.now();
+    expect(await loadRates((_url, init) => abortable(init?.signal), '/', 20)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  it('gives up on a response body that never finishes', async () => {
+    const stalled: FetchLike = (_url, init) => Promise.resolve({ ok: true, json: () => abortable(init?.signal) });
+    expect(await loadRates(stalled, '/', 20)).toBeNull();
   });
 });
