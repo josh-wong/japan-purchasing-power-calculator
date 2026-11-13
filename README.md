@@ -1,6 +1,6 @@
 # Japan Purchasing Power Calculator
 
-Compare a purchase in Japan against monthly take-home pay in Japan and another currency. The main result applies the purchase's share of Japanese income to the comparison income. Exchange-rate conversion appears separately.
+Help visitors and residents understand what share of a monthly income in yen a purchase in Japan takes. The main result applies that share to a comparison income in another currency to show the equivalent cost. Exchange-rate conversion appears separately. The incomes can be real or hypothetical.
 
 ## Run locally
 

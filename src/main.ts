@@ -93,7 +93,7 @@ function showHomeField() {
     homePayByCurrency.set(currency, value);
   }
   homeField.value = homePayByCurrency.get(currency) ?? '';
-  byId('home-label').textContent = `Monthly pay (${currency})`;
+  byId('home-label').textContent = `Monthly income (${currency})`;
   byId('home-prefix').textContent = moneySymbol(currency);
   showError(homeField, homeErrorByCurrency.get(currency) ?? '');
 }
@@ -124,14 +124,14 @@ function render(announce = true) {
   let resultNote = 'Enter a price in yen to compare the cost.';
   if (price.amount !== null) {
     if (japan.amount === null) {
-      resultNote = 'Enter the income in Japan to see the equivalent cost.';
+      resultNote = 'Enter a monthly income in yen to see the equivalent cost.';
     } else if (home.amount === null) {
       resultNote = 'Enter a comparison income to see the equivalent cost.';
     } else {
       const shareDescription = japanShare !== null && japanShare > 0 && japanShareText !== '<0.01%'
         ? `about ${japanShareText}`
         : spokenShare(japanShareText);
-      resultNote = `${formatMoney(price.amount, 'JPY', price.precision)} is ${shareDescription} of the Japan income. The same share of the comparison income is ${equivalentText}.`;
+      resultNote = `${formatMoney(price.amount, 'JPY', price.precision)} is ${shareDescription} of the entered income in yen. The same share of the comparison income is ${equivalentText}.`;
     }
   }
 
@@ -152,7 +152,7 @@ function render(announce = true) {
     clearTimeout(announcementTimer);
     announcementTimer = setTimeout(() => {
       const metrics = [
-        ['equivalent', 'Equivalent cost at the same share of pay'], ['converted', 'Price at the exchange rate'],
+        ['equivalent', 'Equivalent cost at the same share of income'], ['converted', 'Price at the exchange rate'],
       ];
       const spokenResults = metrics.map(([id, label]) => {
         const value = byId(id).textContent ?? '';

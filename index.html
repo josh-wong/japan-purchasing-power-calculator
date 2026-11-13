@@ -78,8 +78,8 @@
 
   <main class="wrap">
     <div class="intro">
-      <h1>How does a purchase in Japan compare with monthly income?</h1>
-      <p>Compare a purchase with monthly take-home pay in Japan and another currency. See its price at the exchange rate too.</p>
+      <h1>How much of a monthly income in yen would that purchase take?</h1>
+      <p>Enter a purchase price and a monthly income in yen. See what percentage of that income the purchase takes, and what the same percentage would amount to on an income in another currency.</p>
     </div>
 
     <div class="calculator">
@@ -116,10 +116,10 @@
         </div>
 
         <fieldset class="pay-fields" aria-describedby="pay-help">
-          <legend>Monthly take-home pay</legend>
-          <p id="pay-help" class="help">Enter monthly pay after taxes and other deductions. The prefilled amounts are editable examples, not national averages.</p>
+          <legend>Monthly take-home income</legend>
+          <p id="pay-help" class="help">Enter monthly income after taxes and other deductions. The incomes can be real or hypothetical. The prefilled amounts are editable examples, not national averages.</p>
           <div class="japan-income">
-            <label class="field-label" for="japan">Japan income (JPY)</label>
+            <label class="field-label" for="japan">Income in yen (JPY)</label>
             <div class="input-shell">
               <span class="prefix" aria-hidden="true">JP¥</span>
               <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="number-format japan-error">
@@ -146,7 +146,7 @@
                 </select>
               </div>
               <div>
-                <label id="home-label" class="field-label" for="home">Monthly pay (USD)</label>
+                <label id="home-label" class="field-label" for="home">Monthly income (USD)</label>
                 <div class="input-shell">
                   <span class="prefix" id="home-prefix" aria-hidden="true">US$</span>
                   <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format comparison-help home-error">
@@ -161,9 +161,9 @@
 
       <section class="panel result" aria-labelledby="result-title">
         <div class="result-main">
-          <h2 id="result-title">Same share of pay</h2>
+          <h2 id="result-title">Same share of income</h2>
           <p id="equivalent" class="hero-amount">US$80.00</p>
-          <p id="result-note" class="metric-note">JP¥5,000 is about 2% of the Japan income. The same share of the comparison income is US$80.00.</p>
+          <p id="result-note" class="metric-note">JP¥5,000 is about 2% of the entered income in yen. The same share of the comparison income is US$80.00.</p>
         </div>
         <div class="metric">
           <h3>Price at the exchange rate</h3>
@@ -171,14 +171,14 @@
           <p class="metric-note"><a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer" aria-label="ECB reference rates (opens in a new tab)">ECB reference rates</a><span id="rate-note"> · Illustrative rate snapshot — November 11, 2026</span></p>
         </div>
         <section class="share-section" aria-labelledby="share-title">
-          <h3 id="share-title">Share of monthly take-home pay</h3>
+          <h3 id="share-title">Share of monthly take-home income</h3>
           <dl class="pay-shares">
             <div class="metric">
-              <dt>Japan income</dt>
+              <dt>Income in yen</dt>
               <dd>
                 <p class="metric-value" id="japan-share">2%</p>
                 <p class="metric-note" id="japan-share-note">Of JP¥250,000</p>
-                <p class="metric-note">Yen price ÷ Japan income</p>
+                <p class="metric-note">Yen price ÷ income in yen</p>
               </dd>
             </div>
             <div class="metric">
@@ -200,7 +200,7 @@
                 <p id="rate-pair">Exchange rate used: 1 USD = 159.234 JPY.</p>
               </li>
               <li>
-                Divide the yen price by the income in Japan to find the percentage of pay it costs. Apply that percentage to the comparison income to get the equivalent cost.
+                Divide the yen price by the income in yen to find the percentage of that income the purchase takes. Apply that percentage to the comparison income to get the equivalent cost.
                 <p>When you enter a higher comparison income, the same percentage adds up to a larger amount. The converted price stays the same.</p>
               </li>
               <li>Divide the converted price by the comparison income to see what percentage of that income the purchase would cost.</li>
@@ -213,7 +213,7 @@
   </main>
 
   <footer class="wrap site-footer">
-    <p>Built by <a href="https://www.linkedin.com/in/wongjoshua">Josh Wong</a> to help visitors see how the same purchase can feel different for someone living in Japan and getting paid in yen.</p>
+    <p>Built by <a href="https://www.linkedin.com/in/wongjoshua">Josh Wong</a> to help visitors and residents understand the cost of a purchase relative to monthly incomes in yen and another currency.</p>
     <p>Estimates for information only, not financial advice. Exchange rates exclude card and exchange fees. Income comparisons use the amounts you enter and do not account for differences in living costs. Your inputs stay in this browser and aren’t saved.</p>
   </footer>
 

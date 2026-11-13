@@ -45,13 +45,13 @@ it('restores income per currency and resets the scenario', () => {
   expect(field('home').value).toBe('4,000');
 });
 it('explains the same share using the entered price without rounding fractional yen away', () => {
-  expect(field('result-note').textContent).toBe('JP¥5,000 is about 2% of the Japan income. The same share of the comparison income is US$80.00.');
+  expect(field('result-note').textContent).toBe('JP¥5,000 is about 2% of the entered income in yen. The same share of the comparison income is US$80.00.');
   change('price', '.01');
-  expect(field('result-note').textContent).toBe('JP¥0.01 is less than 0.01% of the Japan income. The same share of the comparison income is US$0.00.');
+  expect(field('result-note').textContent).toBe('JP¥0.01 is less than 0.01% of the entered income in yen. The same share of the comparison income is US$0.00.');
   change('price', '0');
-  expect(field('result-note').textContent).toBe('JP¥0 is 0% of the Japan income. The same share of the comparison income is US$0.00.');
+  expect(field('result-note').textContent).toBe('JP¥0 is 0% of the entered income in yen. The same share of the comparison income is US$0.00.');
   change('price', '500000');
-  expect(field('result-note').textContent).toBe('JP¥500,000 is about 200% of the Japan income. The same share of the comparison income is US$8,000.00.');
+  expect(field('result-note').textContent).toBe('JP¥500,000 is about 200% of the entered income in yen. The same share of the comparison income is US$8,000.00.');
 });
 it('prefills every comparison currency and preserves an intentionally cleared income', () => {
   for (const option of field('currency').options) {
@@ -109,12 +109,12 @@ it('preserves fractional yen on blur and announces after a pause', () => {
   expect(field('price').value).toBe('5,000.5');
   expect(field('result-announcement').textContent).toBe('');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of pay US$80.01. Price at the exchange rate US$31.40.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$80.01. Price at the exchange rate US$31.40.');
 });
 it('announces the missing-income prompt while keeping the available converted price', () => {
   change('japan', '');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Price at the exchange rate US$31.40. Enter the income in Japan to see the equivalent cost.');
+  expect(field('result-announcement').textContent).toBe('Price at the exchange rate US$31.40. Enter a monthly income in yen to see the equivalent cost.');
 });
 it('keeps independently computable outputs and exposes inline errors', () => {
   change('japan', '0');
