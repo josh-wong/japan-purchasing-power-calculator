@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "rates:update": "node scripts/update-rates.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint . && python3 scripts/check_repository.py lint && python3 scripts/check_repository.py mockup"
