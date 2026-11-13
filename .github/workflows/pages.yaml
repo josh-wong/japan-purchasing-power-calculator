@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 10
     env:
       BASE_PATH: /japan-purchasing-power-calculator/
+      PUBLISHED_RATES_URL: https://www.080f53.com/japan-purchasing-power-calculator/rates.json
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +41,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - name: Fetch and validate ECB rates
-        run: npm run rates:update
+        id: rates
+        run: npm run rates:update -- --fallback-url="$PUBLISHED_RATES_URL"
+      - name: Fail scheduled refreshes that reused the published snapshot
+        if: steps.rates.outputs.rates_fallback == 'true' && github.event_name == 'schedule'
+        run: |
+          echo "::error::The ECB refresh failed, so the scheduled run did not refresh the snapshot."
+          exit 1
+      - name: Note that the published snapshot was reused
+        if: steps.rates.outputs.rates_fallback == 'true' && github.event_name != 'schedule'
+        run: echo "::warning::The ECB feed was unavailable, so this deployment reuses the previously published snapshot."
       - name: Warn when the analytics measurement ID is missing
         env:
           GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}

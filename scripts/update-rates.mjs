@@ -3,7 +3,7 @@
 // Usage: node scripts/update-rates.mjs [--out public/rates.json]
 // Exits non-zero, and leaves any existing asset untouched, on a failed fetch or invalid data.
 import { randomUUID } from 'node:crypto';
-import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { bundledCurrencyCodes } from '../src/currencies.ts';
@@ -113,6 +113,12 @@ export async function updateRates({ fetchImpl = fetch, output = defaultOutput, n
     warnings.push(`The feed's currencies differ from src/currencies.ts (new: ${added.join(', ') || 'none'}; missing: ${removed.join(', ') || 'none'}). Update the bundled list.`);
   }
 
+  await writeSnapshot(snapshot, output);
+  return { snapshot, output, warnings };
+}
+
+/** Writes the snapshot to `output` through a temporary file in the same directory. */
+async function writeSnapshot(snapshot, output) {
   await mkdir(path.dirname(output), { recursive: true });
   const temporary = `${output}.${randomUUID()}.tmp`;
   try {
@@ -121,16 +127,66 @@ export async function updateRates({ fetchImpl = fetch, output = defaultOutput, n
   } finally {
     await rm(temporary, { force: true });
   }
-  return { snapshot, output, warnings };
+}
+
+/**
+ * Downloads the snapshot that is already published and validates it, so a build can still ship
+ * code changes while the ECB feed is unavailable.
+ */
+export async function fetchPublishedSnapshot(fetchImpl = fetch, url) {
+  let response;
+  try {
+    response = await fetchImpl(url, { signal: AbortSignal.timeout(15_000), headers: { Accept: 'application/json' } });
+  } catch (error) {
+    throw new RateDataError(`Could not fetch the published snapshot: ${error instanceof Error ? error.message : error}`);
+  }
+  if (!response.ok) throw new RateDataError(`Could not fetch the published snapshot: HTTP ${response.status}.`);
+  const text = await readLimitedText(response);
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new RateDataError('The published snapshot is not valid JSON.');
+  }
+  return validateSnapshot(parsed);
+}
+
+/**
+ * Updates from the ECB. If that fails and `fallbackUrl` is set, validates and writes the
+ * published snapshot instead and reports `usedFallback`.
+ */
+export async function updateRatesWithFallback({ fallbackUrl, fetchImpl = fetch, output = defaultOutput, ...options } = {}) {
+  try {
+    return { ...(await updateRates({ fetchImpl, output, ...options })), usedFallback: false };
+  } catch (error) {
+    if (!fallbackUrl) throw error;
+    const reason = error instanceof Error ? error.message : String(error);
+    let snapshot;
+    try {
+      snapshot = await fetchPublishedSnapshot(fetchImpl, fallbackUrl);
+    } catch (fallbackError) {
+      throw new RateDataError(`${reason} The published snapshot is also unavailable: ${fallbackError instanceof Error ? fallbackError.message : fallbackError}`);
+    }
+    await writeSnapshot(snapshot, output);
+    return { snapshot, output, usedFallback: true, warnings: [`${reason} Reused the published snapshot dated ${snapshot.date}.`] };
+  }
+}
+
+function optionValue(argv, name) {
+  const index = argv.indexOf(name);
+  if (index === -1) return undefined;
+  if (!argv[index + 1]) throw new RateDataError(`${name} needs a value.`);
+  return argv[index + 1];
 }
 
 async function main(argv) {
-  const flag = argv.indexOf('--out');
-  const output = flag === -1 ? defaultOutput : path.resolve(argv[flag + 1] ?? '');
-  if (flag !== -1 && !argv[flag + 1]) throw new RateDataError('--out needs a file path.');
-  const { snapshot, warnings } = await updateRates({ output });
+  const out = optionValue(argv, '--out');
+  const output = out === undefined ? defaultOutput : path.resolve(out);
+  const fallbackUrl = optionValue(argv, '--fallback-url');
+  const { snapshot, warnings, usedFallback } = await updateRatesWithFallback({ output, fallbackUrl });
   for (const warning of warnings) console.warn(`Warning: ${warning}`);
-  console.log(`Wrote ${Object.keys(snapshot.unitsPerEuro).length} ECB rates dated ${snapshot.date} to ${path.relative(process.cwd(), output) || output}.`);
+  if (usedFallback && process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, 'rates_fallback=true\n');
+  console.log(`Wrote ${Object.keys(snapshot.unitsPerEuro).length} ${usedFallback ? 'published' : 'ECB'} rates dated ${snapshot.date} to ${path.relative(process.cwd(), output) || output}.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
