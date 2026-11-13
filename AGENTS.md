@@ -27,11 +27,15 @@ Japan Purchasing Power Calculator is an English-language web calculator for visi
 
 The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`. Wiring that command into scheduled GitHub Pages publication is separate work.
 
+Vite builds two pages: the calculator (`index.html`) and the privacy notice (`privacy.html`), configured in `vite.config.ts`. Both load the shared theme script in `public/theme.js`. `src/analytics.ts` holds the consent record, opt-out signal, and Google Analytics loader logic, and `src/consent-banner.ts` renders the opt-in panel and the **Analytics settings** control. Analytics is enabled only when the build sets `VITE_GA_MEASUREMENT_ID`.
+
 ### Architecture patterns
 
 Keep income-based equivalence independent of exchange rates: `(priceJpy / japanMonthly) * comparisonMonthly`. Convert currency with `priceJpy * (target units per EUR / JPY per EUR)`. Round only for display, and preserve independently computable results when other inputs or rates are missing. Keep comparison incomes keyed by currency for the visit.
 
 Production rates must be fetched and validated in CI from the ECB and served from the same origin; a failed refresh must stop publication. Show the source and publication date, flag snapshots older than seven calendar days, and resolve assets through Vite’s base URL for both root and project Pages paths. The mockup’s keyless Frankfurter request and bundled fallback are prototype behavior, not the production data pipeline.
+
+Usage analytics is opt-in for every visitor. Load no Google script and make no request to Google until the visitor selects **Allow analytics**. Treat Global Privacy Control and Do Not Track as a decline, and treat a missing, expired, or unreadable consent record as no choice. Load the consent module through a dynamic import guarded by `import.meta.env.VITE_GA_MEASUREMENT_ID`, so builds without an ID contain no analytics code. Never pass calculator state to analytics code; it must not import from, or read, the form.
 
 ## Development workflow
 
@@ -110,7 +114,11 @@ Use Node.js 24.15 or later in the 24.x line, or Node.js 26 or later and Python 3
 
 ## Privacy and security considerations
 
-Purchase and income inputs stay in memory for the current browser session. Do not persist them or send them in requests, URLs, logs, analytics, or crash reports. Only the theme preference may be stored in browser storage. The calculation requires no account or personal data collection. Review network changes against the design document; distinguish the mockup’s currency-only rate request from production’s same-origin snapshot.
+Purchase and income inputs, selected currencies and presets, and results stay in memory for the current browser session. Do not persist them or send them in requests, URLs, logs, analytics events, or crash reports. Browser storage may hold only the theme preference and the analytics consent record (choice, time, and notice version). The calculation requires no account or personal data collection.
+
+Google Analytics 4 is the only third-party destination, and only after opt-in. It may receive standard page views and automatically collected usage data. Keep Google signals, advertising features, and ad personalization off. Limit analytics cookies to the app's host and base path, reduce the page address to its path plus `utm_*` campaign tags, and delete the cookies when the visitor withdraws. Increase `consentVersion` in `src/analytics.ts` and update `privacy.html` whenever what analytics collects changes.
+
+Review network changes against the design document; distinguish the mockup’s currency-only rate request from production’s same-origin snapshot. Keep the privacy notice, the design document, and the product requirements in step with the shipped analytics behavior; a mismatch is a bug to fix in the same pull request.
 
 ## Writing style
 

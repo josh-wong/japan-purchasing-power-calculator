@@ -35,4 +35,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Confirm builds without a measurement ID contain no analytics code
+        run: '! grep -rq googletagmanager dist'
       - run: npm run build -- --base=/japan-purchasing-power-calculator/
