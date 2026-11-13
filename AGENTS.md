@@ -25,7 +25,7 @@ Japan Purchasing Power Calculator is an English-language web calculator for visi
 
 ### Key components
 
-The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. The migration uses an injected dated rate fixture; production ECB ingestion and GitHub Pages publication are separate work.
+The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`. Wiring that command into scheduled GitHub Pages publication is separate work.
 
 ### Architecture patterns
 

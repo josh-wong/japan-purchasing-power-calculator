@@ -1,5 +1,7 @@
 import { parseAmount, calculate } from './calculator';
-import { savedRates } from './rates';
+import { bundledCurrencyCodes } from './currencies';
+import { comparisonCurrencies, isOutdated, yenPerUnit, type RateSnapshot } from './rate-snapshot';
+import { loadRates } from './rates';
 
 const currencySymbols: Record<string, string> = { USD: 'US$', JPY: 'JP¥', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$', HKD: 'HK$', SGD: 'S$' };
 function byId(id: string): HTMLElement {
@@ -22,7 +24,9 @@ const moneyFormatters = new Map<string, Intl.NumberFormat>();
 const rateFormat = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 });
 const dateFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
 const percentFormat = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
-const dayMs = 86_400_000;
+const currencyNames = new Intl.DisplayNames('en', { type: 'currency' });
+let snapshot: RateSnapshot | null = null;
+let ratesStatus: 'loading' | 'ready' | 'unavailable' = 'loading';
 let announcementTimer: ReturnType<typeof setTimeout> | undefined;
 
 function moneyFormatter(currency: string) {
@@ -55,22 +59,42 @@ function moneySymbol(currency: string) {
     .find((part) => part.type === 'currency')!.value;
 }
 
+function currencyLabel(code: string) {
+  let name: string | undefined;
+  try {
+    name = currencyNames.of(code);
+  } catch {
+    // Fall back to the bare code for anything the runtime cannot name.
+  }
+  return name && name !== code ? `${code} · ${name}` : code;
+}
+
+function setCurrencyOptions(codes: string[]) {
+  const selected = currencyField.value;
+  currencyField.replaceChildren(...codes.map((code) => new Option(currencyLabel(code), code)));
+  currencyField.value = codes.includes(selected) ? selected : defaultCurrency;
+  return currencyField.value !== selected;
+}
+
 function rateFor(currency: string) {
-  const snapshot = savedRates;
-  const units = snapshot.unitsPerEuro[currency];
-  if (!units) return null;
-  const rateDate = new Date(snapshot.date);
-  const ageDays = Math.floor(Date.now() / dayMs) - Math.floor(rateDate.getTime() / dayMs);
-  const freshness = ageDays > 7 ? ' · Outdated' : '';
+  if (!snapshot) return null;
+  const yen = yenPerUnit(snapshot, currency);
+  if (yen === null) return null;
+  const outdated = isOutdated(snapshot.date, Date.now());
   return {
-    yenPerUnit: snapshot.unitsPerEuro.JPY / units,
-    note: ` · Illustrative rate snapshot — ${dateFormat.format(rateDate)}${freshness}`,
+    yenPerUnit: yen,
+    note: ` · ${dateFormat.format(new Date(snapshot.date))}${outdated ? ' · Outdated' : ''}`,
   };
 }
 
-
-
-
+function exampleIncome(currency: string) {
+  const units = snapshot?.unitsPerEuro[currency];
+  const usd = snapshot?.unitsPerEuro.USD;
+  if (!units || !usd) return null;
+  const convertedIncome = Number(homeField.defaultValue.replaceAll(',', '')) * units / usd;
+  const increment = convertedIncome >= 100_000 ? 10_000 : 1_000;
+  return wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
+}
 
 function showError(field: HTMLInputElement, error: string) {
   if (field === homeField) homeErrorByCurrency.set(currencyField.value, error);
@@ -83,14 +107,9 @@ function showError(field: HTMLInputElement, error: string) {
 function showHomeField() {
   const currency = currencyField.value;
   if (!homePayByCurrency.has(currency)) {
-    const units = savedRates.unitsPerEuro[currency];
-    const usd = savedRates.unitsPerEuro.USD;
-    const defaultIncome = Number(homeField.defaultValue.replaceAll(',', ''));
-    const convertedIncome = units && usd ? defaultIncome * units / usd : null;
-    const increment = convertedIncome !== null && convertedIncome >= 100_000 ? 10_000 : 1_000;
-    const value = convertedIncome === null ? ''
-      : wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
-    homePayByCurrency.set(currency, value);
+    // An unvisited currency stays unset without a rate, so it can be prefilled once rates load.
+    const example = exampleIncome(currency);
+    if (example !== null) homePayByCurrency.set(currency, example);
   }
   homeField.value = homePayByCurrency.get(currency) ?? '';
   byId('home-label').textContent = `Monthly income (${currency})`;
@@ -138,7 +157,7 @@ function render(announce = true) {
   byId('equivalent').textContent = equivalentText;
   byId('result-note').textContent = resultNote;
   byId('converted').textContent = convertedText;
-  byId('rate-note').textContent = rate?.note ?? ' · Exchange rate unavailable';
+  byId('rate-note').textContent = rate?.note ?? (ratesStatus === 'loading' ? ' · Loading exchange rate…' : ' · Exchange rate unavailable');
   byId('rate-pair').hidden = !rate;
   byId('rate-pair').textContent = rate ? `Exchange rate used: 1 ${currency} = ${rateFormat.format(rate.yenPerUnit)} JPY` : '';
   byId('japan-share').textContent = japanShareText;
@@ -158,7 +177,7 @@ function render(announce = true) {
         const value = byId(id).textContent ?? '';
         return value === '—' ? '' : `${label} ${value}. `;
       }).join('');
-      const conversionStatus = price.amount !== null && byId('rate-pair').hidden ? 'Exchange rate unavailable.' : '';
+      const conversionStatus = price.amount !== null && !rate && ratesStatus !== 'loading' ? 'Exchange rate unavailable.' : '';
       byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(' ');
     }, 450);
   }
@@ -218,5 +237,19 @@ byId('reset').addEventListener('click', () => {
   render();
 });
 
+setCurrencyOptions(bundledCurrencyCodes);
 showHomeField();
 render(false);
+
+void loadRates().then((loaded) => {
+  snapshot = loaded;
+  ratesStatus = loaded ? 'ready' : 'unavailable';
+  let selectionChanged = false;
+  if (loaded) {
+    const codes = comparisonCurrencies(loaded);
+    const listed = Array.from(currencyField.options, (option) => option.value);
+    selectionChanged = codes.join() !== listed.join() && setCurrencyOptions(codes);
+  }
+  if (selectionChanged || !homePayByCurrency.has(currencyField.value)) showHomeField();
+  render(false);
+});

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { calculate, parseAmount } from './calculator';
-import { savedRates } from './rates';
 
 describe('numeric input', () => {
   it.each(['1,234.50', '１２３４．５０', '１，２３４．５０'])('normalizes %s', raw => {
@@ -28,7 +27,8 @@ describe('numeric input', () => {
 });
 
 describe('independent calculations', () => {
-  const rate = savedRates.unitsPerEuro.JPY / savedRates.unitsPerEuro.USD;
+  // Dated November 11, 2026 ECB values: units per EUR.
+  const rate = 177.18 / 1.1127;
   it('matches the dated November 11 fixture without rounding intermediate results', () => {
     const result = calculate(5000, 250000, 4000, rate);
     expect(result.equivalent).toBe(80);

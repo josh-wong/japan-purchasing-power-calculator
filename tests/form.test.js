@@ -2,19 +2,31 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 
+import rates from './fixtures/rates.json';
+
 const html = readFileSync('index.html', 'utf8');
 const field = id => document.getElementById(id);
 function change(id, value, type = 'input') {
   field(id).value = value;
   field(id).dispatchEvent(new Event(type, { bubbles: true }));
 }
-beforeEach(async () => {
+const respond = body => ({ ok: true, json: async () => body });
+const settle = () => vi.advanceTimersByTimeAsync(0);
+async function open({ fetchImpl = async () => respond(rates), now = '2026-11-12T12:00:00Z', wait = true } = {}) {
   vi.resetModules();
-  vi.useFakeTimers();
+  vi.useFakeTimers({ now: new Date(now) });
+  const fetchMock = vi.fn(fetchImpl);
+  vi.stubGlobal('fetch', fetchMock);
   document.documentElement.innerHTML = html.replace(/<script[\s\S]*?<\/script>/g, '');
   await import('../src/main.ts');
+  if (wait) await settle();
+  return fetchMock;
+}
+beforeEach(() => open());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
-afterEach(() => vi.useRealTimers());
 it('renders the default fixture and all nine presets', () => {
   expect(field('equivalent').textContent).toBe('US$80.00');
   expect(field('converted').textContent).toBe('US$31.40');
@@ -199,4 +211,112 @@ it('joins dollar symbols to amounts and keeps spacing after currency codes', () 
   expect(field('home-share-note').textContent).toBe('Of S$6,000.00');
   change('currency', 'CHF', 'change');
   expect(field('equivalent').textContent).toBe('CHF\u00a080.00');
+});
+
+const optionCodes = () => Array.from(field('currency').options, option => option.value);
+const codesWithout = (...omitted) => Object.keys(rates.unitsPerEuro).filter(code => code !== 'JPY' && !omitted.includes(code));
+
+it('lists every currency in the loaded snapshot except JPY, with USD first and names', () => {
+  expect(optionCodes()).toEqual(['USD', ...codesWithout('USD')]);
+  expect(optionCodes()).toContain('EUR');
+  expect(optionCodes()).not.toContain('JPY');
+  expect(optionCodes().length).toBe(29);
+  expect(field('currency').options[0].textContent).toBe('USD · US Dollar');
+  expect(field('currency').selectedOptions[0].value).toBe('USD');
+});
+
+it('shows the source, full date, and numeric pair for an available rate', () => {
+  expect(field('rate-pair').hidden).toBe(false);
+  expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 USD = 159.234 JPY');
+  expect(field('rate-note').textContent).toBe(' · November 11, 2026');
+  const link = field('rate-note').parentElement.querySelector('a');
+  expect(link.textContent).toBe('ECB reference rates');
+  expect(link.href).toContain('ecb.europa.eu');
+  change('currency', 'EUR', 'change');
+  expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 EUR = 177.18 JPY');
+  expect(field('converted').textContent).toBe('€28.22');
+  change('currency', 'GBP', 'change');
+  expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 GBP = 211.892 JPY');
+});
+
+it.each([
+  ['2026-11-18T23:59:59Z', false],
+  ['2026-11-19T00:00:00Z', true],
+])('marks the November 11 snapshot outdated only after seven calendar days (%s)', async (now, outdated) => {
+  await open({ now });
+  expect(field('rate-note').textContent.includes('Outdated')).toBe(outdated);
+  expect(field('rate-note').textContent).toContain('November 11, 2026');
+  expect(field('converted').textContent).toBe('US$31.40');
+  expect(field('rate-pair').hidden).toBe(false);
+});
+
+it('requests only the same-origin rates asset and never sends or stores entered amounts', async () => {
+  const fetchMock = await open();
+  change('price', '123456');
+  change('home', '9999');
+  change('currency', 'EUR', 'change');
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(fetchMock.mock.calls[0][0]).toBe('/rates.json');
+  expect(localStorage.length).toBe(0);
+  expect(sessionStorage.length).toBe(0);
+});
+
+it.each([
+  ['a failed request', () => Promise.reject(new Error('offline'))],
+  ['a missing asset', async () => ({ ok: false, json: async () => ({}) })],
+  ['malformed JSON', async () => ({ ok: true, json: async () => { throw new SyntaxError('Unexpected token <'); } })],
+  ['a snapshot without JPY', async () => respond({ ...rates, unitsPerEuro: { EUR: 1, USD: 1.1 } })],
+  ['an undated snapshot', async () => respond({ source: rates.source, unitsPerEuro: rates.unitsPerEuro })],
+  ['an invalid rate', async () => respond({ ...rates, unitsPerEuro: { ...rates.unitsPerEuro, USD: 0 } })],
+])('keeps income-based results and the picker when the rates asset is unavailable: %s', async (_name, fetchImpl) => {
+  await open({ fetchImpl });
+  expect(field('rate-note').textContent).toBe(' · Exchange rate unavailable');
+  expect(field('rate-pair').hidden).toBe(true);
+  expect(field('converted').textContent).toBe('—');
+  expect(field('home-share').textContent).toBe('—');
+  expect(field('equivalent').textContent).toBe('US$80.00');
+  expect(field('japan-share').textContent).toBe('2%');
+  expect(optionCodes().length).toBe(29);
+  expect(optionCodes()).toContain('ZAR');
+  expect(field('home').value).toBe('4,000.00');
+  change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('');
+  change('home', '3000');
+  expect(field('equivalent').textContent).toBe('€60.00');
+  vi.advanceTimersByTime(450);
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income €60.00. Exchange rate unavailable.');
+});
+
+it('shows a loading state, then prefills unvisited currencies but keeps cleared incomes', async () => {
+  let resolve;
+  await open({ fetchImpl: () => new Promise(done => { resolve = done; }), wait: false });
+  expect(field('rate-note').textContent).toBe(' · Loading exchange rate…');
+  expect(field('equivalent').textContent).toBe('US$80.00');
+  expect(field('converted').textContent).toBe('—');
+  change('currency', 'EUR', 'change');
+  expect(field('home').value).toBe('');
+  change('currency', 'GBP', 'change');
+  change('home', '');
+  change('currency', 'EUR', 'change');
+  resolve(respond(rates));
+  await settle();
+  expect(field('rate-note').textContent).toBe(' · November 11, 2026');
+  expect(field('home').value).toBe('4,000');
+  expect(field('converted').textContent).toBe('€28.22');
+  change('currency', 'GBP', 'change');
+  expect(field('home').value).toBe('');
+});
+
+it('falls back to USD when the loaded snapshot no longer lists the selected currency', async () => {
+  let resolve;
+  await open({ fetchImpl: () => new Promise(done => { resolve = done; }), wait: false });
+  change('currency', 'ZAR', 'change');
+  const { ZAR, ...unitsPerEuro } = rates.unitsPerEuro;
+  expect(ZAR).toBeGreaterThan(0);
+  resolve(respond({ ...rates, unitsPerEuro }));
+  await settle();
+  expect(optionCodes()).not.toContain('ZAR');
+  expect(field('currency').value).toBe('USD');
+  expect(field('home').value).toBe('4,000.00');
+  expect(field('converted').textContent).toBe('US$31.40');
 });
