@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  consentStorageKey, consentVersion, deleteAnalyticsCookies, hasOptOutSignal, measurementId, pageLocation,
-  readConsent, startAnalytics, stopAnalytics, writeConsent,
+  consentSecondsLeft, consentStorageKey, consentVersion, deleteAnalyticsCookies, hasOptOutSignal, measurementId,
+  pageLocation, pageReferrer, readConsent, startAnalytics, stopAnalytics, writeConsent,
 } from './analytics';
 
 const now = Date.parse('2026-11-13T12:00:00Z');
@@ -79,6 +79,13 @@ describe('consent records', () => {
     expect(localStorage.getItem(consentStorageKey)).toBeNull();
   });
 
+  it('counts the seconds left on a choice, so cookies expire with it', () => {
+    const at = new Date(now).toISOString();
+    expect(consentSecondsLeft(at, now)).toBe(365 * 86_400);
+    expect(consentSecondsLeft(at, now + 360 * day)).toBe(5 * 86_400);
+    expect(consentSecondsLeft(at, now + 400 * day)).toBe(0);
+  });
+
   it('treats missing or failing storage as no recorded choice', () => {
     const failing = {
       getItem() { throw new DOMException('blocked', 'SecurityError'); },
@@ -102,6 +109,16 @@ describe('pageLocation', () => {
   });
 });
 
+describe('pageReferrer', () => {
+  it('reduces the referrer like the page address and ignores a missing or invalid one', () => {
+    expect(pageReferrer('https://example.com/app/?gclid=abc&price=5000&utm_source=news#x'))
+      .toBe('https://example.com/app/?utm_source=news');
+    expect(pageReferrer('https://search.example/results?q=yen')).toBe('https://search.example/results');
+    expect(pageReferrer('')).toBe('');
+    expect(pageReferrer('not a url')).toBe('');
+  });
+});
+
 describe('deleteAnalyticsCookies', () => {
   it('removes only this app’s prefixed cookies and keeps other sites’ Google Analytics cookies', () => {
     document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
@@ -121,10 +138,16 @@ describe('deleteAnalyticsCookies', () => {
 describe('startAnalytics and stopAnalytics', () => {
   const id = 'G-TEST1234';
   const entries = () => (testWindow.dataLayer ?? []).map((entry) => Array.from(entry));
+  const configs = () => entries().filter(([command]) => command === 'config');
+  const year = 365 * 86_400;
+
+  afterEach(() => {
+    Reflect.deleteProperty(document, 'referrer');
+  });
 
   it('queues a privacy-restricted configuration and loads gtag.js once', () => {
-    startAnalytics(id, document, '/app/');
-    startAnalytics(id, document, '/app/');
+    startAnalytics(id, year, document, '/app/');
+    startAnalytics(id, year, document, '/app/');
     const scripts = document.querySelectorAll('script');
     expect(scripts.length).toBe(1);
     expect(scripts[0].src).toBe('https://www.googletagmanager.com/gtag/js?id=G-TEST1234');
@@ -132,28 +155,41 @@ describe('startAnalytics and stopAnalytics', () => {
     expect(entries()[0]).toEqual(['consent', 'default', {
       analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
     }]);
-    expect(entries().find(([command]) => command === 'config')).toEqual(['config', id, {
+    expect(configs()[0]).toEqual(['config', id, {
       page_location: 'http://localhost:3000/',
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
       cookie_domain: 'none',
       cookie_path: '/app/',
       cookie_prefix: 'jppc',
-      cookie_expires: 365 * 86_400,
+      cookie_expires: year,
     }]);
     expect(testWindow.dataLayer?.[0]).not.toBeInstanceOf(Array);
   });
 
-  it('stops collection after withdrawal and resumes without loading the script again', () => {
-    startAnalytics(id, document, '/');
+  it('sends a reduced referrer and a cookie lifetime that ends with the choice', () => {
+    Object.defineProperty(document, 'referrer', { value: 'http://localhost:3000/?gclid=abc&utm_source=news', configurable: true });
+    startAnalytics(id, 5 * 86_400, document, '/');
+    expect(configs()[0][2]).toMatchObject({
+      page_referrer: 'http://localhost:3000/?utm_source=news',
+      cookie_expires: 5 * 86_400,
+    });
+  });
+
+  it('stops collection after withdrawal and counts the page again when allowed again', () => {
+    startAnalytics(id, year, document, '/');
     document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
     stopAnalytics(id, document, '/');
     expect(testWindow['ga-disable-G-TEST1234']).toBe(true);
     expect(entries().at(-1)).toEqual(['consent', 'update', { analytics_storage: 'denied' }]);
     expect(document.cookie).toBe('');
-    startAnalytics(id, document, '/');
+    startAnalytics(id, year, document, '/');
     expect(testWindow['ga-disable-G-TEST1234']).toBe(false);
-    expect(entries().at(-1)).toEqual(['consent', 'update', { analytics_storage: 'granted' }]);
+    expect(entries().slice(-2)).toEqual([
+      ['consent', 'update', { analytics_storage: 'granted' }],
+      configs()[0],
+    ]);
+    expect(configs().length).toBe(2);
     expect(document.querySelectorAll('script').length).toBe(1);
   });
 });

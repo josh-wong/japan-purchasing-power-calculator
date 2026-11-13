@@ -47,9 +47,9 @@
     <p>When analytics is allowed, Google Analytics receives:</p>
     <ul>
       <li>The page you view, without any query parameters except campaign tags (such as <code>utm_source</code>), and the page title.</li>
-      <li>The time and length of your visit, and links you follow to other sites.</li>
+      <li>The time and length of your visit, whether you scroll to the bottom of a page, and links you follow to other sites.</li>
       <li>Your browser, operating system, device type, screen size, and language.</li>
-      <li>The site that linked you here, if your browser shares it.</li>
+      <li>The page that linked you here, if your browser shares it, with the same query parameters removed.</li>
       <li>Your approximate location (country, region, and city), which Google derives from your IP address. Google Analytics doesn’t store IP addresses.</li>
       <li>A random identifier stored in cookies, so repeat visits can be counted.</li>
     </ul>
@@ -63,8 +63,8 @@
           <tr><th scope="col">Name</th><th scope="col">Purpose</th><th scope="col">Expires</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>jppc_ga</code></td><td>Distinguishes one browser from another with a random identifier</td><td>12 months</td></tr>
-          <tr><td><code>jppc_ga_</code> followed by an ID</td><td>Keeps track of the current visit</td><td>12 months</td></tr>
+          <tr><td><code>jppc_ga</code></td><td>Distinguishes one browser from another with a random identifier</td><td>When your analytics choice expires</td></tr>
+          <tr><td><code>jppc_ga_</code> followed by an ID</td><td>Keeps track of the current visit</td><td>When your analytics choice expires</td></tr>
         </tbody>
       </table>
     </div>
@@ -78,7 +78,7 @@
     <p>Usage data isn’t sold or shared for cross-context behavioral advertising.</p>
 
     <h2>How long data is kept</h2>
-    <p>Google Analytics deletes visit-level data after 14 months. Reports may keep aggregated counts, such as total visits per month, that don’t identify anyone. The analytics cookies expire after 12 months. Your analytics choice also expires after 12 months, after which the site asks again.</p>
+    <p>Google Analytics deletes visit-level data after 14 months. Reports may keep aggregated counts, such as total visits per month, that don’t identify anyone. Your analytics choice expires 12 months after you make it, and the site then asks again. The analytics cookies expire at the same time.</p>
 
     <h2>Your choices</h2>
     <p>Select <strong>Analytics settings</strong> at the bottom of any page to allow or turn off analytics at any time. Turning it off stops collection immediately and deletes the analytics cookies.</p>

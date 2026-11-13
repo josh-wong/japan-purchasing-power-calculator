@@ -1,5 +1,5 @@
 import {
-  browserStorage, deleteAnalyticsCookies, hasOptOutSignal, measurementId, readConsent,
+  browserStorage, consentMaxAgeDays, consentSecondsLeft, deleteAnalyticsCookies, hasOptOutSignal, measurementId, readConsent,
   startAnalytics, stopAnalytics, writeConsent, type ConsentChoice,
 } from './analytics';
 
@@ -29,9 +29,10 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   const basePath = import.meta.env.BASE_URL;
   const storage = browserStorage();
   const signal = hasOptOutSignal();
-  let choice: ConsentChoice | null = signal ? null : readConsent(storage, Date.now())?.choice ?? null;
+  const record = signal ? null : readConsent(storage, Date.now());
+  let choice: ConsentChoice | null = record?.choice ?? null;
 
-  if (choice === 'granted') startAnalytics(id);
+  if (record?.choice === 'granted') startAnalytics(id, consentSecondsLeft(record.at, Date.now()));
   else deleteAnalyticsCookies(document, basePath);
 
   const announcer = element('p', { id: 'consent-announcement', className: 'sr-only' });
@@ -101,7 +102,8 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   function choose(next: ConsentChoice) {
     choice = next;
     const stored = writeConsent(storage, next, Date.now());
-    if (next === 'granted') startAnalytics(id);
+    // A new choice lasts the full period, and so do the cookies.
+    if (next === 'granted') startAnalytics(id, consentMaxAgeDays * 86_400);
     else stopAnalytics(id);
     hide();
     const scope = stored ? '' : ' for this visit';

@@ -133,6 +133,8 @@ it('collects nothing after a decline and remembers either choice on the next vis
   await open();
   expect(panel().hidden).toBe(true);
   expect(googleScripts().length).toBe(1);
+  // Chosen 12.5 days earlier, so the cookies get the 352.5 days left on the choice.
+  expect(dataLayerText()).toContain(`"cookie_expires":${352.5 * 86_400}`);
 });
 
 it('withdraws consent from Analytics settings, stops collection, and deletes the analytics cookies', async () => {

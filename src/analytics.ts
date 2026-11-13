@@ -19,7 +19,10 @@ export const consentStorageKey = 'japan-purchasing-power.analytics-consent';
  * Keep the privacy notice in privacy.html in step with this version.
  */
 export const consentVersion = 1;
-/** A choice lasts a year, then the visitor is asked again. Analytics cookies never outlive it. */
+/**
+ * A choice lasts a year, then the visitor is asked again. Analytics cookies never outlive it:
+ * startAnalytics() sets their lifetime to the time left on the choice.
+ */
 export const consentMaxAgeDays = 365;
 const dayMs = 86_400_000;
 const measurementIdPattern = /^G-[A-Z0-9]{4,20}$/;
@@ -28,7 +31,10 @@ const measurementIdPattern = /^G-[A-Z0-9]{4,20}$/;
  * same domain, so the prefix keeps it from reading or deleting their `_ga` cookies.
  */
 export const cookiePrefix = 'jppc';
-/** Matches `jppc_ga` and `jppc_ga_<ID>`, plus the double-underscore form some gtag versions use. */
+/**
+ * Matches `jppc_ga` and `jppc_ga_<ID>`, the names gtag.js sets with this prefix (checked against
+ * gtag.js in November 2026). The double-underscore form is matched too in case Google changes it.
+ */
 const ownCookiePattern = new RegExp(`^${cookiePrefix}__?ga(?:_[A-Za-z0-9]+)?$`);
 /** Campaign tags describe where a visit came from; every other query parameter is dropped. */
 const campaignParameters = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id'];
@@ -88,6 +94,11 @@ export function readConsent(storage: ConsentStorage | null, now: number): Consen
   return null;
 }
 
+/** Seconds until a choice made at `at` expires, so analytics cookies expire with the choice. */
+export function consentSecondsLeft(at: string, now: number): number {
+  return Math.max(0, Math.floor((Date.parse(at) + consentMaxAgeDays * dayMs - now) / 1000));
+}
+
 /** Stores the choice and its time. Returns false when storage is unavailable, so the choice lasts for this visit only. */
 export function writeConsent(storage: ConsentStorage | null, choice: ConsentChoice, now: number): boolean {
   if (!storage) return false;
@@ -113,6 +124,18 @@ export function pageLocation(href: string): string {
 }
 
 /**
+ * The referrer sent to Google, reduced like pageLocation(). Without this, gtag.js sends the full
+ * document.referrer, which includes the query parameters of the previous page on this site.
+ */
+export function pageReferrer(referrer: string): string {
+  try {
+    return referrer ? pageLocation(referrer) : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Removes this app's prefixed analytics cookies, which are host-only and set at the app path.
  * Unprefixed `_ga` cookies belong to other sites on the same domain and are left alone.
  */
@@ -129,35 +152,45 @@ function scriptSelector(id: string) {
 
 /**
  * Loads gtag.js after consent. Advertising storage and signals stay off, the prefixed cookies
- * are limited to this host and app path, and the page address is reduced by pageLocation().
+ * are limited to this host and app path and expire with the consent choice (`cookieSeconds`),
+ * and the page address and referrer are reduced by pageLocation().
+ *
+ * Allowing analytics again after a withdrawal on the same page repeats the configuration, which
+ * sends a page view and recreates the cookies deleted on withdrawal.
  */
-export function startAnalytics(id: string, doc: Document = document, basePath: string = import.meta.env.BASE_URL): void {
+export function startAnalytics(
+  id: string, cookieSeconds: number, doc: Document = document, basePath: string = import.meta.env.BASE_URL,
+): void {
   const win = doc.defaultView as unknown as AnalyticsWindow;
   win[`ga-disable-${id}`] = false;
-  if (doc.querySelector(scriptSelector(id))) {
+  const loaded = doc.querySelector(scriptSelector(id)) !== null;
+  if (!loaded) {
+    const dataLayer = win.dataLayer ?? [];
+    win.dataLayer = dataLayer;
+    win.gtag = function gtag() {
+      // gtag.js expects the arguments object itself, not an array copy.
+      // eslint-disable-next-line prefer-rest-params
+      dataLayer.push(arguments);
+    };
+    win.gtag('consent', 'default', {
+      analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    });
+    win.gtag('js', new Date());
+  } else {
     win.gtag?.('consent', 'update', { analytics_storage: 'granted' });
-    return;
   }
-  const dataLayer = win.dataLayer ?? [];
-  win.dataLayer = dataLayer;
-  win.gtag = function gtag() {
-    // gtag.js expects the arguments object itself, not an array copy.
-    // eslint-disable-next-line prefer-rest-params
-    dataLayer.push(arguments);
-  };
-  win.gtag('consent', 'default', {
-    analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
-  });
-  win.gtag('js', new Date());
-  win.gtag('config', id, {
+  const referrer = pageReferrer(doc.referrer);
+  win.gtag?.('config', id, {
     page_location: pageLocation(win.location.href),
+    ...(referrer ? { page_referrer: referrer } : {}),
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
     cookie_domain: 'none',
     cookie_path: basePath,
     cookie_prefix: cookiePrefix,
-    cookie_expires: consentMaxAgeDays * 86_400,
+    cookie_expires: cookieSeconds,
   });
+  if (loaded) return;
   const script = doc.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
