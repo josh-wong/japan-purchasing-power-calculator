@@ -25,7 +25,7 @@ Japan Purchasing Power Calculator is an English-language web calculator for visi
 
 ### Key components
 
-The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`. Wiring that command into scheduled GitHub Pages publication is separate work.
+The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`.
 
 Vite builds two pages: the calculator (`index.html`) and the privacy notice (`privacy.html`), configured in `vite.config.ts`. Both load the shared theme script in `public/theme.js`. `src/analytics.ts` holds the consent record, opt-out signal, and Google Analytics loader logic, and `src/consent-banner.ts` renders the opt-in panel and the **Analytics settings** control. Analytics is enabled only when the build sets `VITE_GA_MEASUREMENT_ID`.
 

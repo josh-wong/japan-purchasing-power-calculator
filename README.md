@@ -36,9 +36,19 @@ Page markup lives in `index.html` and `privacy.html`, styles in `src/styles.css`
 
 `scripts/update-rates.mjs` fetches the ECB daily XML feed and writes `public/rates.json`, which Vite serves from the app's own origin. The file holds the publication date, the source, and positive units-per-EUR rates, including EUR at 1. The command exits with an error, and keeps any existing file, when the fetch fails or the data is invalid (for example, a bad date or rate, or a missing JPY rate). `public/rates.json` is generated and ignored by Git.
 
-The browser loads `rates.json` relative to Vite's base URL, so it works at a domain root and at the project Pages path. The comparison currency picker lists every currency in that file except JPY. If the file cannot load, the picker uses the last verified list in `src/currencies.ts`, and the calculator still shows the income-based equivalent. `rates:update` warns when the feed's currencies differ from that list. Tests use the dated fixtures in `tests/fixtures/` and never contact the ECB. Wiring the update into scheduled GitHub Pages builds remains separate work.
+The browser loads `rates.json` relative to Vite's base URL, so it works at a domain root and at the project Pages path. The comparison currency picker lists every currency in that file except JPY. If the file cannot load, the picker uses the last verified list in `src/currencies.ts`, and the calculator still shows the income-based equivalent. `rates:update` warns when the feed's currencies differ from that list. Tests use the dated fixtures in `tests/fixtures/` and never contact the ECB.
 
 See the [product requirements](docs/_planning/v1.0-product-requirements-doc.md) and [design document](docs/_planning/v1.0-design-doc.md) for the full behavior and deployment requirements. Browser verification includes a 320 CSS-pixel viewport, keyboard access, appearance switching, and screen-reader announcements; unit tests do not replace those checks.
+
+## Deployment
+
+The calculator is published at `https://www.080f53.com/japan-purchasing-power-calculator/` through GitHub Pages, with **Settings → Pages → Source** set to **GitHub Actions**. `.github/workflows/pages.yml` builds and deploys on pushes to `main`, daily at 17:20 Europe/Brussels (after the ECB's usual publication), and on manual dispatch. Pull requests run only the lint and build-and-test workflows, which never publish.
+
+The build job runs `npm run rates:update`, lint, type-checking, and tests, then builds with the `/japan-purchasing-power-calculator/` base, confirms `dist/rates.json` exists, and uploads `dist/`. The deploy job runs only if the build job succeeds, so a failed fetch, validation, test, or build leaves the previously published site and snapshot in place. Runs share one concurrency group, so they never overlap.
+
+Set the `GA_MEASUREMENT_ID` repository variable (**Settings → Secrets and variables → Actions → Variables**) to enable analytics in the production build. Without it, the build succeeds with a warning and the site has no analytics.
+
+To recover from a failed run, read the log in **Actions**, fix the cause (for example, an ECB outage resolves itself on the next run), and choose **Run workflow**. GitHub disables scheduled workflows after 60 days without repository activity. If that happens, open **Actions → Deploy to GitHub Pages**, choose **Enable workflow**, and then **Run workflow** to refresh the snapshot.
 
 ## Contributing
 
