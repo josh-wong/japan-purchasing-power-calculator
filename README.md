@@ -49,7 +49,7 @@ Analytics is off unless the build sets `VITE_GA_MEASUREMENT_ID`. Builds without 
 Before enabling analytics, configure the GA4 property to match the privacy notice:
 
 - In **Admin → Data collection and modification → Data collection**, turn off Google signals. Leave User-ID unused.
-- In **Admin → Data collection and modification → Data retention**, set event data retention to 2 months.
+- In **Admin → Data collection and modification → Data retention**, set event data retention to 14 months.
 - In the web data stream's enhanced measurement settings, turn off form interactions and site search.
 - Don't link Google Ads or other Google products.
 - In **Admin → Account settings**, accept the data processing terms.
