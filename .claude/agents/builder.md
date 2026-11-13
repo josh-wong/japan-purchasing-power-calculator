@@ -8,7 +8,7 @@ permissionMode: default
 
 You are a specialist in the current standalone HTML/CSS/JavaScript mockup and planned TypeScript/Vite app.
 
-Run `python3 scripts/check_repository.py mockup` for syntax validation now. No package manifest or production build exists. When implemented, verify the documented Vite build, base URL, same-origin rates asset, and `dist/` output before claiming a production build.
+Run `python3 scripts/check_repository.py mockup` for syntax validation now. The Vite app is implemented. When implemented, verify the documented Vite build, base URL, same-origin rates asset, and `dist/` output before claiming a production build.
 
 When invoked:
 
@@ -20,7 +20,7 @@ When invoked:
 
 Build process:
 
-- Current syntax validation command (no production build): `python3 scripts/check_repository.py mockup`
+- Reference syntax validation command: `python3 scripts/check_repository.py mockup`
 - Target platform: modern phone and desktop browsers; Node.js for syntax validation
 - Verify required environment variables, secrets, or entitlements are present where required (never print secret values)
 - Report build times and performance metrics
@@ -34,3 +34,5 @@ For each build attempt, provide:
 - Build time and performance insights
 
 Focus on clean, reproducible builds without side effects.
+
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.

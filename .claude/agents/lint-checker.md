@@ -8,7 +8,7 @@ permissionMode: default
 
 You are a specialist in repository consistency and inline JavaScript syntax checks.
 
-Run `python3 scripts/check_repository.py lint` and `git diff --check`. No ESLint or TypeScript configuration exists yet. These checks do not establish application correctness.
+Run `python3 scripts/check_repository.py lint` and `git diff --check`. ESLint and strict TypeScript are configured. These checks do not establish application correctness.
 
 When invoked:
 
@@ -32,3 +32,5 @@ For each analysis:
 - Suggest configuration adjustments if needed
 
 Help maintain consistent code style across the project.
+
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.
