@@ -71,8 +71,8 @@ export async function fetchEcbXml(fetchImpl = fetch, url = ecbDailyUrl) {
 }
 
 /** Reads the body as text, stopping as soon as it exceeds `maxXmlLength` bytes. */
-async function readLimitedText(response) {
-  const tooLarge = () => new RateDataError('The ECB feed was unexpectedly large.');
+async function readLimitedText(response, label = 'The ECB feed') {
+  const tooLarge = () => new RateDataError(`${label} was unexpectedly large.`);
   const declared = Number(response.headers?.get?.('content-length'));
   if (declared > maxXmlLength) {
     await response.body?.cancel?.();
@@ -133,7 +133,7 @@ async function writeSnapshot(snapshot, output) {
  * Downloads the snapshot that is already published and validates it, so a build can still ship
  * code changes while the ECB feed is unavailable.
  */
-export async function fetchPublishedSnapshot(fetchImpl = fetch, url) {
+export async function fetchPublishedSnapshot(fetchImpl = fetch, url, now = Date.now()) {
   let response;
   try {
     response = await fetchImpl(url, { signal: AbortSignal.timeout(15_000), headers: { Accept: 'application/json' } });
@@ -141,29 +141,32 @@ export async function fetchPublishedSnapshot(fetchImpl = fetch, url) {
     throw new RateDataError(`Could not fetch the published snapshot: ${error instanceof Error ? error.message : error}`);
   }
   if (!response.ok) throw new RateDataError(`Could not fetch the published snapshot: HTTP ${response.status}.`);
-  const text = await readLimitedText(response);
+  const text = await readLimitedText(response, 'The published snapshot');
   let parsed;
   try {
     parsed = JSON.parse(text);
   } catch {
     throw new RateDataError('The published snapshot is not valid JSON.');
   }
-  return validateSnapshot(parsed);
+  const snapshot = validateSnapshot(parsed);
+  if (isOutdated(snapshot.date, now)) throw new RateDataError(`The published snapshot is outdated: it is dated ${snapshot.date}.`);
+  return snapshot;
 }
 
 /**
  * Updates from the ECB. If that fails and `fallbackUrl` is set, validates and writes the
  * published snapshot instead and reports `usedFallback`.
  */
-export async function updateRatesWithFallback({ fallbackUrl, fetchImpl = fetch, output = defaultOutput, ...options } = {}) {
+export async function updateRatesWithFallback({ fallbackUrl, fetchImpl = fetch, output = defaultOutput, now = Date.now(), ...options } = {}) {
   try {
-    return { ...(await updateRates({ fetchImpl, output, ...options })), usedFallback: false };
+    return { ...(await updateRates({ fetchImpl, output, now, ...options })), usedFallback: false };
   } catch (error) {
-    if (!fallbackUrl) throw error;
+    // Only feed problems fall back; local errors such as a failed file write still fail the run.
+    if (!fallbackUrl || !(error instanceof RateDataError)) throw error;
     const reason = error instanceof Error ? error.message : String(error);
     let snapshot;
     try {
-      snapshot = await fetchPublishedSnapshot(fetchImpl, fallbackUrl);
+      snapshot = await fetchPublishedSnapshot(fetchImpl, fallbackUrl, now);
     } catch (fallbackError) {
       throw new RateDataError(`${reason} The published snapshot is also unavailable: ${fallbackError instanceof Error ? fallbackError.message : fallbackError}`);
     }
@@ -172,7 +175,12 @@ export async function updateRatesWithFallback({ fallbackUrl, fetchImpl = fetch, 
   }
 }
 
-function optionValue(argv, name) {
+export function optionValue(argv, name) {
+  const inline = argv.find((arg) => arg.startsWith(`${name}=`));
+  if (inline !== undefined) {
+    if (inline.length === name.length + 1) throw new RateDataError(`${name} needs a value.`);
+    return inline.slice(name.length + 1);
+  }
   const index = argv.indexOf(name);
   if (index === -1) return undefined;
   if (!argv[index + 1]) throw new RateDataError(`${name} needs a value.`);
