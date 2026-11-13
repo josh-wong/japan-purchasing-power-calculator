@@ -103,12 +103,18 @@ describe('pageLocation', () => {
 });
 
 describe('deleteAnalyticsCookies', () => {
-  it('removes only the Google Analytics cookies', () => {
-    document.cookie = '_ga=GA1.1.111.222; path=/';
-    document.cookie = '_ga_TEST1234=GS1.1.333; path=/';
+  it('removes only this app’s prefixed cookies and keeps other sites’ Google Analytics cookies', () => {
+    document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
+    document.cookie = 'jppc_ga_TEST1234=GS1.1.333; path=/';
+    document.cookie = 'jppc__ga=GA1.1.444.555; path=/';
+    document.cookie = '_ga=GA1.1.666.777; path=/';
+    document.cookie = '_ga_PMP34RZWN2P=GS1.1.888; path=/';
+    document.cookie = 'jppc_gallery=keep; path=/';
     document.cookie = 'other=keep; path=/';
-    deleteAnalyticsCookies(document, location.hostname, '/');
-    expect(document.cookie).toBe('other=keep');
+    deleteAnalyticsCookies(document, '/');
+    expect(document.cookie.split('; ').sort()).toEqual([
+      '_ga=GA1.1.666.777', '_ga_PMP34RZWN2P=GS1.1.888', 'jppc_gallery=keep', 'other=keep',
+    ]);
   });
 });
 
@@ -132,6 +138,7 @@ describe('startAnalytics and stopAnalytics', () => {
       allow_ad_personalization_signals: false,
       cookie_domain: 'none',
       cookie_path: '/app/',
+      cookie_prefix: 'jppc',
       cookie_expires: 365 * 86_400,
     }]);
     expect(testWindow.dataLayer?.[0]).not.toBeInstanceOf(Array);
@@ -139,7 +146,7 @@ describe('startAnalytics and stopAnalytics', () => {
 
   it('stops collection after withdrawal and resumes without loading the script again', () => {
     startAnalytics(id, document, '/');
-    document.cookie = '_ga=GA1.1.111.222; path=/';
+    document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
     stopAnalytics(id, document, '/');
     expect(testWindow['ga-disable-G-TEST1234']).toBe(true);
     expect(entries().at(-1)).toEqual(['consent', 'update', { analytics_storage: 'denied' }]);

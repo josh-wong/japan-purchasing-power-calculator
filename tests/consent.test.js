@@ -6,6 +6,12 @@ import rates from './fixtures/rates.json';
 
 const measurementId = 'G-TEST1234';
 const consentKey = 'japan-purchasing-power.analytics-consent';
+// Cookies another site on the same domain (such as the main 080f53.com site) may set; this app must never remove them.
+const otherSiteCookies = ['_ga=GA1.1.900.901', '_ga_PMP34RZWN2P=GS1.1.902'];
+function setOtherSiteCookies() {
+  for (const cookie of otherSiteCookies) document.cookie = `${cookie}; path=/`;
+}
+const cookieList = () => document.cookie.split('; ').filter(Boolean).sort();
 const pages = {
   calculator: { html: readFileSync('index.html', 'utf8'), entry: '../src/main.ts' },
   privacy: { html: readFileSync('privacy.html', 'utf8'), entry: '../src/privacy.ts' },
@@ -67,6 +73,7 @@ it('adds no consent panel, settings control, or Google request when no measureme
 });
 
 it('asks first and contacts Google only after the visitor allows analytics', async () => {
+  setOtherSiteCookies();
   const fetchMock = await open();
   expect(panel().hidden).toBe(false);
   expect(document.body.firstElementChild).toBe(panel());
@@ -76,7 +83,7 @@ it('asks first and contacts Google only after the visitor allows analytics', asy
   expect(panel().querySelector('a').getAttribute('href')).toBe('privacy.html');
   expect(googleScripts().length).toBe(0);
   expect(window.dataLayer).toBeUndefined();
-  expect(document.cookie).toBe('');
+  expect(cookieList()).toEqual(otherSiteCookies);
 
   change('price', '123456');
   change('japan', '7654321');
@@ -131,8 +138,9 @@ it('collects nothing after a decline and remembers either choice on the next vis
 it('withdraws consent from Analytics settings, stops collection, and deletes the analytics cookies', async () => {
   await open();
   button('Allow analytics').click();
-  document.cookie = '_ga=GA1.1.111.222; path=/';
-  document.cookie = `_ga_TEST1234=GS1.1.333; path=/`;
+  setOtherSiteCookies();
+  document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
+  document.cookie = 'jppc_ga_TEST1234=GS1.1.333; path=/';
 
   const settings = field('analytics-settings');
   expect(settings.closest('#footer-links')).not.toBeNull();
@@ -147,7 +155,7 @@ it('withdraws consent from Analytics settings, stops collection, and deletes the
   button('Decline').click();
   expect(window[`ga-disable-${measurementId}`]).toBe(true);
   expect(Array.from(window.dataLayer.at(-1))).toEqual(['consent', 'update', { analytics_storage: 'denied' }]);
-  expect(document.cookie).toBe('');
+  expect(cookieList()).toEqual(otherSiteCookies);
   expect(storedChoice()).toBe('denied');
   expect(panel().hidden).toBe(true);
   expect(settings.getAttribute('aria-expanded')).toBe('false');
@@ -162,13 +170,14 @@ it.each([
   ['Do Not Track', 'doNotTrack', '1'],
 ])('treats %s as a decline without asking, even over an earlier opt-in', async (_name, signal, value) => {
   localStorage.setItem(consentKey, JSON.stringify({ choice: 'granted', at: '2026-11-01T00:00:00.000Z', version: 1 }));
-  document.cookie = '_ga=GA1.1.111.222; path=/';
+  document.cookie = 'jppc_ga=GA1.1.111.222; path=/';
+  setOtherSiteCookies();
   setSignal(signal, value);
   await open();
   expect(panel().hidden).toBe(true);
   expect(googleScripts().length).toBe(0);
   expect(window.dataLayer).toBeUndefined();
-  expect(document.cookie).toBe('');
+  expect(cookieList()).toEqual(otherSiteCookies);
 
   field('analytics-settings').click();
   expect(panel().querySelector('.consent-status').textContent)

@@ -32,7 +32,7 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   let choice: ConsentChoice | null = signal ? null : readConsent(storage, Date.now())?.choice ?? null;
 
   if (choice === 'granted') startAnalytics(id);
-  else deleteAnalyticsCookies(document, location.hostname, basePath);
+  else deleteAnalyticsCookies(document, basePath);
 
   const announcer = element('p', { id: 'consent-announcement', className: 'sr-only' });
   announcer.setAttribute('role', 'status');

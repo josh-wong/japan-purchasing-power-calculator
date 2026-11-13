@@ -23,6 +23,13 @@ export const consentVersion = 1;
 export const consentMaxAgeDays = 365;
 const dayMs = 86_400_000;
 const measurementIdPattern = /^G-[A-Z0-9]{4,20}$/;
+/**
+ * Prefix for this app's analytics cookies. The app shares its origin with other sites on the
+ * same domain, so the prefix keeps it from reading or deleting their `_ga` cookies.
+ */
+export const cookiePrefix = 'jppc';
+/** Matches `jppc_ga` and `jppc_ga_<ID>`, plus the double-underscore form some gtag versions use. */
+const ownCookiePattern = new RegExp(`^${cookiePrefix}__?ga(?:_[A-Za-z0-9]+)?$`);
 /** Campaign tags describe where a visit came from; every other query parameter is dropped. */
 const campaignParameters = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id'];
 
@@ -105,21 +112,15 @@ export function pageLocation(href: string): string {
   return `${url.origin}${url.pathname}${query ? `?${query}` : ''}`;
 }
 
-/** Removes `_ga` and `_ga_*` cookies for this host and its parent domains, at the app path and the root path. */
-export function deleteAnalyticsCookies(doc: Document, hostname: string, basePath: string): void {
+/**
+ * Removes this app's prefixed analytics cookies, which are host-only and set at the app path.
+ * Unprefixed `_ga` cookies belong to other sites on the same domain and are left alone.
+ */
+export function deleteAnalyticsCookies(doc: Document, basePath: string): void {
   const names = doc.cookie.split(';')
     .map((cookie) => cookie.split('=')[0].trim())
-    .filter((name) => name === '_ga' || name.startsWith('_ga_'));
-  if (names.length === 0) return;
-  const labels = hostname.split('.');
-  const domains = [''];
-  for (let index = 0; index < labels.length - 1; index += 1) domains.push(`; domain=${labels.slice(index).join('.')}`);
-  const paths = [...new Set([basePath, '/'])];
-  for (const name of names) {
-    for (const domain of domains) {
-      for (const path of paths) doc.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}${domain}`;
-    }
-  }
+    .filter((name) => ownCookiePattern.test(name));
+  for (const name of names) doc.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${basePath}`;
 }
 
 function scriptSelector(id: string) {
@@ -127,8 +128,8 @@ function scriptSelector(id: string) {
 }
 
 /**
- * Loads gtag.js after consent. Advertising storage and signals stay off, the cookie is limited
- * to this host and app path, and the page address is reduced by pageLocation().
+ * Loads gtag.js after consent. Advertising storage and signals stay off, the prefixed cookies
+ * are limited to this host and app path, and the page address is reduced by pageLocation().
  */
 export function startAnalytics(id: string, doc: Document = document, basePath: string = import.meta.env.BASE_URL): void {
   const win = doc.defaultView as unknown as AnalyticsWindow;
@@ -154,6 +155,7 @@ export function startAnalytics(id: string, doc: Document = document, basePath: s
     allow_ad_personalization_signals: false,
     cookie_domain: 'none',
     cookie_path: basePath,
+    cookie_prefix: cookiePrefix,
     cookie_expires: consentMaxAgeDays * 86_400,
   });
   const script = doc.createElement('script');
@@ -169,5 +171,5 @@ export function stopAnalytics(id: string, doc: Document = document, basePath: st
   // Google's documented opt-out flag; gtag.js checks it before sending each hit.
   win[`ga-disable-${id}`] = true;
   win.gtag?.('consent', 'update', { analytics_storage: 'denied' });
-  deleteAnalyticsCookies(doc, win.location.hostname, basePath);
+  deleteAnalyticsCookies(doc, basePath);
 }
