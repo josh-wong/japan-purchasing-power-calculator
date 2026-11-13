@@ -35,4 +35,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Confirm builds without a measurement ID contain no analytics code
+        run: |
+          if find dist -name 'consent-banner*' | grep -q .; then
+            echo "::error::The build includes the consent banner chunk."
+            exit 1
+          fi
+          if grep -rlE 'googletagmanager|gtag|ga-disable|analytics-consent|jppc' dist/assets; then
+            echo "::error::The build's scripts include analytics code."
+            exit 1
+          fi
       - run: npm run build -- --base=/japan-purchasing-power-calculator/

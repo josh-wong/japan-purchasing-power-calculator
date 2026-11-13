@@ -26,7 +26,7 @@ These agents specialize in diagnosing failures and optimizing performance.
 
 ### Privacy review
 
-**privacy-auditor:** Verifies that financial inputs remain in memory and do not enter storage or network requests. Example usage: "Use privacy-auditor to audit this PR before merge"
+**privacy-auditor:** Verifies that financial inputs remain in memory and do not enter storage or network requests, and that usage analytics runs only after opt-in. Example usage: "Use privacy-auditor to audit this PR before merge"
 
 ### GitHub workflow
 

@@ -12,7 +12,7 @@ npm run rates:update
 npm run dev
 ```
 
-The `rates:update` step downloads the current ECB rates. Without it, the app still runs but shows "Exchange rate unavailable". Open the local URL printed by Vite. Financial inputs stay in memory for the visit; only the appearance preference is stored.
+The `rates:update` step downloads the current ECB rates. Without it, the app still runs but shows "Exchange rate unavailable". Open the local URL printed by Vite. Financial inputs stay in memory for the visit. Browser storage holds only the appearance preference and, when analytics is configured, the visitor's analytics choice.
 
 ## Commands
 
@@ -25,14 +25,14 @@ Run these commands from the repository root.
 | `npm run preview` | Serve the built app locally |
 | `npm run rates:update` | Fetch, validate, and write the ECB rate snapshot to `public/rates.json` |
 | `npm run typecheck` | Check TypeScript without emitting files |
-| `npm test` | Run parsing, calculation, rate-update, and form-interaction regression tests |
+| `npm test` | Run parsing, calculation, rate-update, form-interaction, and analytics consent regression tests |
 | `npm run lint` | Run ESLint, repository text checks, and reference mockup syntax checks |
 
 The default build serves a domain root. For the project Pages path, run `npm run build -- --base=/japan-purchasing-power-calculator/`. Preview the built output at that path.
 
 ## Implementation and rate data
 
-Page markup lives in `index.html`, styles in `src/styles.css`, and form state and rendering in `src/main.ts`. `src/calculator.ts` contains pure parsing and calculation functions. The original [mockup](docs/_planning/v1.0-gui-mockup.html) remains the interaction reference.
+Page markup lives in `index.html` and `privacy.html`, styles in `src/styles.css`, the shared theme script in `public/theme.js`, and form state and rendering in `src/main.ts`. `src/calculator.ts` contains pure parsing and calculation functions. The original [mockup](docs/_planning/v1.0-gui-mockup.html) remains the interaction reference.
 
 `scripts/update-rates.mjs` fetches the ECB daily XML feed and writes `public/rates.json`, which Vite serves from the app's own origin. The file holds the publication date, the source, and positive units-per-EUR rates, including EUR at 1. The command exits with an error, and keeps any existing file, when the fetch fails or the data is invalid (for example, a bad date or rate, or a missing JPY rate). `public/rates.json` is generated and ignored by Git.
 

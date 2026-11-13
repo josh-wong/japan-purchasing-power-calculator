@@ -267,3 +267,9 @@ void loadRates().then((loaded) => {
   // Rates can arrive after the visitor starts typing; tell them the conversion changed.
   render(hasInteracted);
 });
+
+// Runs after the calculator is wired so analytics can never block or alter it. Builds without
+// a measurement ID drop this branch, so they contain no analytics code at all.
+if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
+  void import('./consent-banner').then(({ initAnalyticsConsent }) => initAnalyticsConsent());
+}
