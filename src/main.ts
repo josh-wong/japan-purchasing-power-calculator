@@ -16,6 +16,7 @@ const homeField = byId('home') as HTMLInputElement;
 const currencyField = byId('currency') as HTMLSelectElement;
 const defaultCurrency = 'USD';
 const homePayByCurrency = new Map([[defaultCurrency, homeField.defaultValue]]);
+const homeErrorByCurrency = new Map<string, string>();
 const form = document.querySelector('form')!;
 const moneyFormatters = new Map<string, Intl.NumberFormat>();
 const rateFormat = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 });
@@ -72,6 +73,7 @@ function rateFor(currency: string) {
 
 
 function showError(field: HTMLInputElement, error: string) {
+  if (field === homeField) homeErrorByCurrency.set(currencyField.value, error);
   const message = byId(`${field.id}-error`);
   field.setAttribute('aria-invalid', String(Boolean(error)));
   message.textContent = error;
@@ -93,7 +95,7 @@ function showHomeField() {
   homeField.value = homePayByCurrency.get(currency) ?? '';
   byId('home-label').textContent = `Comparison income (${currency})`;
   byId('home-prefix').textContent = moneySymbol(currency);
-  showError(homeField, '');
+  showError(homeField, homeErrorByCurrency.get(currency) ?? '');
 }
 
 function formatShare(share: number | null) {
@@ -204,6 +206,7 @@ form.addEventListener('change', (event) => {
 byId('reset').addEventListener('click', () => {
   for (const field of [priceField, japanField, homeField]) showError(field, '');
   homePayByCurrency.clear();
+  homeErrorByCurrency.clear();
   homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
   presetField.value = defaultPreset;
   priceField.value = priceField.defaultValue;
