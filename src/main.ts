@@ -16,7 +16,6 @@ const homeField = byId('home') as HTMLInputElement;
 const currencyField = byId('currency') as HTMLSelectElement;
 const defaultCurrency = 'USD';
 const homePayByCurrency = new Map([[defaultCurrency, homeField.defaultValue]]);
-const exampleIncomeCurrencies = new Set([defaultCurrency]);
 const homeErrorByCurrency = new Map<string, string>();
 const form = document.querySelector('form')!;
 const moneyFormatters = new Map<string, Intl.NumberFormat>();
@@ -92,10 +91,9 @@ function showHomeField() {
     const value = convertedIncome === null ? ''
       : wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
     homePayByCurrency.set(currency, value);
-    if (value !== '') exampleIncomeCurrencies.add(currency);
   }
   homeField.value = homePayByCurrency.get(currency) ?? '';
-  byId('home-label').textContent = `Comparison income (${currency})`;
+  byId('home-label').textContent = `Monthly pay (${currency})`;
   byId('home-prefix').textContent = moneySymbol(currency);
   showError(homeField, homeErrorByCurrency.get(currency) ?? '');
 }
@@ -111,9 +109,6 @@ function spokenShare(text: string) {
 
 function render(announce = true) {
   const currency = currencyField.value;
-  const isExampleIncome = exampleIncomeCurrencies.has(currency);
-  byId('home-example').hidden = !isExampleIncome;
-  homeField.setAttribute('aria-describedby', `number-format${isExampleIncome ? ' home-example' : ''} home-error`);
   const price = parseAmount(priceField.value, true, 'JPY');
   const japan = parseAmount(japanField.value, false, 'JPY');
   const home = parseAmount(homeField.value, false, currency);
@@ -174,7 +169,6 @@ form.addEventListener('input', (event) => {
   const field = event.target as HTMLInputElement;
   if (field === homeField) {
     homePayByCurrency.set(currencyField.value, field.value);
-    exampleIncomeCurrencies.delete(currencyField.value);
   }
   if (field === priceField || field === japanField || field === homeField) {
     showError(field, '');
@@ -214,8 +208,6 @@ form.addEventListener('change', (event) => {
 byId('reset').addEventListener('click', () => {
   for (const field of [priceField, japanField, homeField]) showError(field, '');
   homePayByCurrency.clear();
-  exampleIncomeCurrencies.clear();
-  exampleIncomeCurrencies.add(defaultCurrency);
   homeErrorByCurrency.clear();
   homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
   presetField.value = defaultPreset;

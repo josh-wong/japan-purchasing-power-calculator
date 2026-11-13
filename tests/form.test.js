@@ -44,34 +44,6 @@ it('restores income per currency and resets the scenario', () => {
   change('currency', 'EUR', 'change');
   expect(field('home').value).toBe('4,000');
 });
-it('tracks example-income guidance per currency until editing and restores it on reset', () => {
-  expect(field('home-example').hidden).toBe(false);
-  expect(field('home').getAttribute('aria-describedby').split(' ')).toContain('home-example');
-  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
-  expect(field('home-example').hidden).toBe(false);
-  change('home', '4321.12');
-  expect(field('home-example').hidden).toBe(true);
-  expect(field('home').getAttribute('aria-describedby').split(' ')).not.toContain('home-example');
-  change('currency', 'EUR', 'change');
-  expect(field('home').value).toBe('4,000');
-  expect(field('home-example').hidden).toBe(false);
-  change('currency', 'USD', 'change');
-  expect(field('home').value).toBe('4321.12');
-  expect(field('home-example').hidden).toBe(true);
-  change('currency', 'EUR', 'change');
-  expect(field('home-example').hidden).toBe(false);
-  change('home', '');
-  expect(field('home-example').hidden).toBe(true);
-  change('currency', 'USD', 'change');
-  change('currency', 'EUR', 'change');
-  expect(field('home').value).toBe('');
-  expect(field('home-example').hidden).toBe(true);
-  field('reset').click();
-  expect(field('home-example').hidden).toBe(false);
-  change('currency', 'EUR', 'change');
-  expect(field('home').value).toBe('4,000');
-  expect(field('home-example').hidden).toBe(false);
-});
 it('explains the same share using the entered price without rounding fractional yen away', () => {
   expect(field('result-note').textContent).toBe('JP¥5,000 is about 2% of the Japan income. The same share of the comparison income is US$80.00.');
   change('price', '.01');

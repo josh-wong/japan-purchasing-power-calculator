@@ -106,54 +106,55 @@
           </select>
         </div>
 
-        <div class="form-row price-row">
-          <div>
-            <label class="field-label" for="price">Price in Japan (JPY)</label>
-            <div class="input-shell">
-              <span class="prefix" aria-hidden="true">JP¥</span>
-              <input id="price" type="text" inputmode="decimal" value="5,000" autocomplete="off" aria-describedby="number-format price-error">
-            </div>
-            <p id="price-error" class="error" hidden></p>
+        <div>
+          <label class="field-label" for="price">Price in Japan (JPY)</label>
+          <div class="input-shell">
+            <span class="prefix" aria-hidden="true">JP¥</span>
+            <input id="price" type="text" inputmode="decimal" value="5,000" autocomplete="off" aria-describedby="number-format price-error">
           </div>
-          <div>
-            <label class="field-label" for="currency">Comparison currency</label>
-            <select id="currency">
-              <option value="USD">USD · US Dollar</option>
-              <option value="AUD">AUD · Australian Dollar</option>
-              <option value="CAD">CAD · Canadian Dollar</option>
-              <option value="EUR">EUR · Euro</option>
-              <option value="GBP">GBP · British Pound</option>
-              <option value="HKD">HKD · Hong Kong Dollar</option>
-              <option value="KRW">KRW · South Korean Won</option>
-              <option value="NZD">NZD · New Zealand Dollar</option>
-              <option value="SGD">SGD · Singapore Dollar</option>
-              <option value="CHF">CHF · Swiss Franc</option>
-            </select>
-          </div>
+          <p id="price-error" class="error" hidden></p>
         </div>
 
         <fieldset class="pay-fields" aria-describedby="pay-help">
           <legend>Monthly take-home pay</legend>
           <p id="pay-help" class="help">Enter monthly pay after taxes and other deductions. The prefilled amounts are editable examples, not national averages.</p>
-          <div class="form-row">
-            <div>
-              <label class="field-label" for="japan">Japan income (JPY)</label>
-              <div class="input-shell">
-                <span class="prefix" aria-hidden="true">JP¥</span>
-                <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="number-format japan-error">
-              </div>
-              <p id="japan-error" class="error" hidden></p>
+          <div class="japan-income">
+            <label class="field-label" for="japan">Japan income (JPY)</label>
+            <div class="input-shell">
+              <span class="prefix" aria-hidden="true">JP¥</span>
+              <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="number-format japan-error">
             </div>
-            <div>
-              <label id="home-label" class="field-label" for="home">Comparison income (USD)</label>
-              <div class="input-shell">
-                <span class="prefix" id="home-prefix" aria-hidden="true">US$</span>
-                <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format home-example home-error">
-              </div>
-              <p id="home-example" class="field-note">Example income—edit to match your pay.</p>
-              <p id="home-error" class="error" hidden></p>
-            </div>
+            <p id="japan-error" class="error" hidden></p>
           </div>
+          <fieldset class="comparison-fields" aria-describedby="comparison-help">
+            <legend>Comparison income</legend>
+            <p id="comparison-help" class="help">Use the example or enter a monthly income in the selected currency.</p>
+            <div class="form-row">
+              <div>
+                <label class="field-label" for="currency">Comparison currency</label>
+                <select id="currency">
+                  <option value="USD">USD · US Dollar</option>
+                  <option value="AUD">AUD · Australian Dollar</option>
+                  <option value="CAD">CAD · Canadian Dollar</option>
+                  <option value="EUR">EUR · Euro</option>
+                  <option value="GBP">GBP · British Pound</option>
+                  <option value="HKD">HKD · Hong Kong Dollar</option>
+                  <option value="KRW">KRW · South Korean Won</option>
+                  <option value="NZD">NZD · New Zealand Dollar</option>
+                  <option value="SGD">SGD · Singapore Dollar</option>
+                  <option value="CHF">CHF · Swiss Franc</option>
+                </select>
+              </div>
+              <div>
+                <label id="home-label" class="field-label" for="home">Monthly pay (USD)</label>
+                <div class="input-shell">
+                  <span class="prefix" id="home-prefix" aria-hidden="true">US$</span>
+                  <input id="home" type="text" inputmode="decimal" value="4,000.00" autocomplete="off" aria-describedby="number-format comparison-help home-error">
+                </div>
+                <p id="home-error" class="error" hidden></p>
+              </div>
+            </div>
+          </fieldset>
         </fieldset>
         <p id="number-format" class="field-note">Number format: 4,000.50 or 4000.50.</p>
       </form>
