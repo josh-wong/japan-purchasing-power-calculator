@@ -6,7 +6,14 @@ describe('numeric input', () => {
   it.each(['1,234.50', '１２３４．５０', '１，２３４．５０'])('normalizes %s', raw => {
     expect(parseAmount(raw, true, 'JPY')).toEqual({ amount: 1234.5, precision: 1, error: '' });
   });
-  it.each(['1,5', '12,34,567', '-1', '1e3', 'Infinity', '1.234', '1234567890123'])('rejects %s', raw => {
+  it.each([
+    ['2500,000', 2500000], ['1,5', 15], ['12,34,567', 1234567],
+    ['1,', 1], ['1,,000', 1000], ['２５００，０００．５０', 2500000.5],
+  ])('accepts misplaced whole-number commas in %s', (raw, amount) => {
+    expect(parseAmount(raw as string, true, 'USD').amount).toBe(amount);
+    expect(parseAmount(raw as string, true, 'USD').error).toBe('');
+  });
+  it.each(['-1', '1e3', 'Infinity', '1.234', '1234567890123', '1.2,3', '1.2.3', ','])('rejects %s', raw => {
     expect(parseAmount(raw, true, 'USD').amount).toBeNull();
     expect(parseAmount(raw, true, 'USD').error).not.toBe('');
   });

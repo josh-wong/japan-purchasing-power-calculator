@@ -85,20 +85,39 @@ it('keeps independently computable outputs and exposes inline errors', () => {
   expect(field('converted').textContent).toBe('US$0.00');
 });
 it('defers formatting errors until blur and clears them when editing resumes', () => {
-  change('price', '1,');
+  change('price', '1..');
   expect(field('price-error').hidden).toBe(true);
   field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
   expect(field('price-error').hidden).toBe(false);
   expect(field('price').getAttribute('aria-invalid')).toBe('true');
   change('home', '5000');
   expect(field('price-error').hidden).toBe(false);
-  change('price', '1,0');
+  change('price', '1..0');
   expect(field('price-error').hidden).toBe(true);
   expect(field('price').getAttribute('aria-invalid')).toBe('false');
   change('price', '1,000');
   expect(field('equivalent').textContent).toBe('US$20.00');
   field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
   expect(field('price').value).toBe('1,000');
+});
+it('calculates through misplaced commas and regroups every monetary field on blur', () => {
+  change('japan', '2500,000');
+  expect(field('japan').value).toBe('2500,000');
+  expect(field('equivalent').textContent).toBe('US$8.00');
+  field('japan').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('japan').value).toBe('2,500,000');
+  expect(field('japan-error').hidden).toBe(true);
+  change('price', '50,00.50');
+  field('price').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('price').value).toBe('5,000.5');
+  expect(field('price-error').hidden).toBe(true);
+  change('home', '40,00.25');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('home').value).toBe('4,000.25');
+  expect(field('home-error').hidden).toBe(true);
+  change('currency', 'EUR', 'change');
+  change('currency', 'USD', 'change');
+  expect(field('home').value).toBe('4,000.25');
 });
 it('clears obsolete errors when presets, currencies, or defaults replace inputs', () => {
   change('price', 'bad');

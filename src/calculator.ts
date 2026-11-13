@@ -7,9 +7,6 @@ export function parseAmount(raw: string, allowZero: boolean, currency: string): 
   const pattern = /^(?:(\d[\d,]*)(?:\.(\d*))?|\.(\d+))$/;
   const parts = value.match(pattern);
   if (!parts) return { amount: null, error: 'Use digits, commas for grouping, and a period for decimals.' };
-  if (parts[1]?.includes(',') && !/^\d{1,3}(?:,\d{3})+$/.test(parts[1])) {
-    return { amount: null, error: 'Check the comma placement. For example, enter 1,234 or 1234.' };
-  }
 
   const fraction = parts[2] ?? parts[3] ?? '';
   const decimals = Math.max(2, (new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2));
