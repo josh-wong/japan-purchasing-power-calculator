@@ -40,22 +40,6 @@ The browser loads `rates.json` relative to Vite's base URL, so it works at a dom
 
 See the [product requirements](docs/_planning/v1.0-product-requirements-doc.md) and [design document](docs/_planning/v1.0-design-doc.md) for the full behavior and deployment requirements. Browser verification includes a 320 CSS-pixel viewport, keyboard access, appearance switching, and screen-reader announcements; unit tests do not replace those checks.
 
-## Privacy and usage analytics
-
-The calculator never sends or stores entered amounts, chosen currencies or presets, or results. Usage analytics through Google Analytics 4 is opt-in for every visitor: the site loads no Google code until the visitor selects **Allow analytics**, treats Global Privacy Control and Do Not Track as a decline, and lets visitors change their choice from **Analytics settings** in the footer. The [privacy notice](privacy.html) describes what is collected.
-
-Analytics is off unless the build sets `VITE_GA_MEASUREMENT_ID`. Builds without it, including local builds, forks, and pull request checks, contain no analytics code. To enable analytics for the published site, add a `GA_MEASUREMENT_ID` repository variable (**Settings → Secrets and variables → Actions → Variables**) and set the production build step's `VITE_GA_MEASUREMENT_ID` environment variable from `vars.GA_MEASUREMENT_ID`. To try it locally, run `VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX npm run dev`.
-
-Before enabling analytics, configure the GA4 property to match the privacy notice:
-
-- In **Admin → Data collection and modification → Data collection**, turn off Google signals. Leave User-ID unused.
-- In **Admin → Data collection and modification → Data retention**, set event data retention to 14 months.
-- In the web data stream's enhanced measurement settings, turn off form interactions and site search.
-- Don't link Google Ads or other Google products.
-- In **Admin → Account settings**, accept the data processing terms.
-
-If what analytics collects changes, increase `consentVersion` in `src/analytics.ts` so every visitor is asked again, and update the privacy notice and its date.
-
 ## Contributing
 
 Read [AGENTS.md](AGENTS.md) for safety and contribution conventions. [CLAUDE.md](CLAUDE.md) imports those instructions, and [.claude/agents](.claude/agents/README.md) contains specialized agent guidance. Use the issue and pull request templates and report checks actually performed.
