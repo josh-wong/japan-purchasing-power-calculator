@@ -1,5 +1,5 @@
 import {
-  browserStorage, consentMaxAgeDays, consentSecondsLeft, deleteAnalyticsCookies, hasOptOutSignal, measurementId, readConsent,
+  browserStorage, clearConsent, consentMaxAgeDays, consentSecondsLeft, deleteAnalyticsCookies, hasOptOutSignal, measurementId, readConsent,
   startAnalytics, stopAnalytics, writeConsent, type ConsentChoice,
 } from './analytics';
 
@@ -29,6 +29,9 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   const basePath = import.meta.env.BASE_URL;
   const storage = browserStorage();
   const signal = hasOptOutSignal();
+  // A privacy signal overrides any earlier choice. Forget it, so turning the signal off later
+  // asks again instead of silently resuming an old opt-in.
+  if (signal) clearConsent(storage);
   const record = signal ? null : readConsent(storage, Date.now());
   let choice: ConsentChoice | null = record?.choice ?? null;
 
@@ -102,8 +105,9 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   function choose(next: ConsentChoice) {
     choice = next;
     const stored = writeConsent(storage, next, Date.now());
-    // A new choice lasts the full period, and so do the cookies.
-    if (next === 'granted') startAnalytics(id, consentMaxAgeDays * 86_400);
+    // A stored choice lasts the full period, and so do the cookies. A choice that couldn't be
+    // stored lasts this visit only, so the cookies become session cookies.
+    if (next === 'granted') startAnalytics(id, stored ? consentMaxAgeDays * 86_400 : 0);
     else stopAnalytics(id);
     hide();
     const scope = stored ? '' : ' for this visit';

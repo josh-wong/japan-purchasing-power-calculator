@@ -86,12 +86,17 @@ export function readConsent(storage: ConsentStorage | null, now: number): Consen
   const valid = (choice === 'granted' || choice === 'denied') && version === consentVersion
     && Number.isFinite(time) && time <= now && now - time < consentMaxAgeDays * dayMs;
   if (valid) return { choice, at: at as string, version };
-  try {
-    storage.removeItem(consentStorageKey);
-  } catch {
-    // Nothing more to do; the record is ignored either way.
-  }
+  clearConsent(storage);
   return null;
+}
+
+/** Forgets any stored choice, for example while a privacy signal overrides it. */
+export function clearConsent(storage: ConsentStorage | null): void {
+  try {
+    storage?.removeItem(consentStorageKey);
+  } catch {
+    // Storage is blocked, so there is no stored choice to forget.
+  }
 }
 
 /** Seconds until a choice made at `at` expires, so analytics cookies expire with the choice. */
@@ -152,7 +157,8 @@ function scriptSelector(id: string) {
 
 /**
  * Loads gtag.js after consent. Advertising storage and signals stay off, the prefixed cookies
- * are limited to this host and app path and expire with the consent choice (`cookieSeconds`),
+ * are limited to this host and app path and expire with the consent choice (`cookieSeconds`;
+ * 0 makes them session cookies, for a choice that lasts only this visit),
  * and the page address and referrer are reduced by pageLocation().
  *
  * Allowing analytics again after a withdrawal on the same page repeats the configuration, which

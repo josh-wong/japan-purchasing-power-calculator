@@ -180,6 +180,8 @@ it.each([
   expect(googleScripts().length).toBe(0);
   expect(window.dataLayer).toBeUndefined();
   expect(cookieList()).toEqual(otherSiteCookies);
+  // The old opt-in is forgotten, so turning the signal off later asks again.
+  expect(localStorage.getItem(consentKey)).toBeNull();
 
   field('analytics-settings').click();
   expect(panel().querySelector('.consent-status').textContent)
@@ -201,6 +203,8 @@ it('keeps the calculator working and asks on each visit when browser storage is 
   expect(field('equivalent').textContent).toBe('US$80.00');
   button('Allow analytics').click();
   expect(googleScripts().length).toBe(1);
+  // The choice lasts this visit only, so the cookies are session cookies.
+  expect(dataLayerText()).toContain('"cookie_expires":0');
   await vi.advanceTimersByTimeAsync(50);
   expect(field('consent-announcement').textContent).toBe('Analytics allowed for this visit. You can change this anytime with Analytics settings at the bottom of the page.');
 
