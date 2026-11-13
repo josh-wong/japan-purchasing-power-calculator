@@ -60,6 +60,31 @@ describe('ECB feed parsing', () => {
   });
 });
 
+describe('stale and implausible feeds', () => {
+  it('accepts a feed up to seven days old and rejects an older one', () => {
+    expect(buildSnapshot(feed('2026-11-05', ['JPY', '177']), now).date).toBe('2026-11-05');
+    expect(() => buildSnapshot(feed('2026-11-04', ['JPY', '177']), now)).toThrow(/outdated/);
+  });
+
+  it.each(['1.77', '49.9', '500.1', '17700'])('rejects a yen rate of %s per euro', (rate) => {
+    expect(() => buildSnapshot(feed('2026-11-11', ['JPY', rate]), now)).toThrow(/JPY.*expected/);
+  });
+
+  it('keeps the previous asset when a refresh serves a stale feed', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'rates-stale-'));
+    const output = path.join(directory, 'rates.json');
+    try {
+      await updateRates({ fetchImpl: respond(xml), output, now });
+      const before = await readFile(output, 'utf8');
+      const stale = xml.replace("time='2026-11-11'", "time='2026-10-01'");
+      await expect(updateRates({ fetchImpl: respond(stale), output, now })).rejects.toThrow(/outdated/);
+      expect(await readFile(output, 'utf8')).toBe(before);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('fetching', () => {
   it('requests the given URL and returns the response text', async () => {
     const calls = [];
@@ -72,6 +97,48 @@ describe('fetching', () => {
     await expect(fetchEcbXml(async () => { throw new TypeError('fetch failed'); })).rejects.toThrow(/Could not fetch the ECB feed: fetch failed/);
     await expect(fetchEcbXml(respond('', { ok: false, status: 503 }))).rejects.toThrow(/HTTP 503/);
     await expect(fetchEcbXml(respond('x'.repeat(1_000_001)))).rejects.toThrow(/unexpectedly large/);
+  });
+});
+
+describe('bounding the response size', () => {
+  const streamOf = (...chunks) => new Response(new ReadableStream({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(new TextEncoder().encode(chunk));
+      controller.close();
+    },
+  }));
+
+  it('reads a streamed body, including multibyte characters split across chunks', async () => {
+    const bytes = new TextEncoder().encode('¥ rates');
+    const response = new Response(new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, 1));
+        controller.enqueue(bytes.slice(1));
+        controller.close();
+      },
+    }));
+    expect(await fetchEcbXml(async () => response)).toBe('¥ rates');
+  });
+
+  it('stops reading a stream that exceeds the limit', async () => {
+    let pulls = 0;
+    const endless = new Response(new ReadableStream({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new TextEncoder().encode('x'.repeat(400_000)));
+      },
+    }));
+    await expect(fetchEcbXml(async () => endless)).rejects.toThrow(/unexpectedly large/);
+    expect(pulls).toBeLessThan(10);
+  });
+
+  it('rejects a declared length over the limit without reading the body', async () => {
+    const response = new Response(streamOf('x').body, { headers: { 'content-length': '2000000' } });
+    await expect(fetchEcbXml(async () => response)).rejects.toThrow(/unexpectedly large/);
+  });
+
+  it('counts bytes, not characters, for plain-text responses', async () => {
+    await expect(fetchEcbXml(respond('¥'.repeat(600_000)))).rejects.toThrow(/unexpectedly large/);
   });
 });
 

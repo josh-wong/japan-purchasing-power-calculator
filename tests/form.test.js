@@ -320,3 +320,37 @@ it('falls back to USD when the loaded snapshot no longer lists the selected curr
   expect(field('home').value).toBe('4,000.00');
   expect(field('converted').textContent).toBe('US$31.40');
 });
+
+it('falls back to the first listed currency when the snapshot has no USD, including after Reset', async () => {
+  const { USD, ...unitsPerEuro } = rates.unitsPerEuro;
+  expect(USD).toBeGreaterThan(0);
+  await open({ fetchImpl: async () => respond({ ...rates, unitsPerEuro }) });
+  expect(optionCodes()).not.toContain('USD');
+  expect(field('currency').value).toBe('AUD');
+  expect(field('home-prefix').textContent).toBe('A$');
+  expect(field('home').value).toBe('');
+  change('home', '5000');
+  expect(field('equivalent').textContent).toBe('A$100.00');
+  change('currency', 'GBP', 'change');
+  field('reset').click();
+  expect(field('currency').value).toBe('AUD');
+  expect(field('home-prefix').textContent).toBe('A$');
+});
+
+it('announces the converted price when rates arrive after the visitor starts typing', async () => {
+  let resolve;
+  await open({ fetchImpl: () => new Promise(done => { resolve = done; }), wait: false });
+  change('price', '6000');
+  vi.advanceTimersByTime(450);
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00.');
+  resolve(respond(rates));
+  await settle();
+  vi.advanceTimersByTime(450);
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00. Price at the exchange rate US$37.68.');
+});
+
+it('stays quiet when rates arrive before the visitor has touched the form', async () => {
+  await open();
+  vi.advanceTimersByTime(450);
+  expect(field('result-announcement').textContent).toBe('');
+});

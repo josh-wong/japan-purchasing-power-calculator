@@ -7,11 +7,14 @@ import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { bundledCurrencyCodes } from '../src/currencies.ts';
-import { RateDataError, comparisonCurrencies, isValidIsoDate, rateSource, validateSnapshot } from '../src/rate-snapshot.ts';
+import {
+  RateDataError, ageInDays, comparisonCurrencies, isOutdated, isValidIsoDate, outdatedAfterDays, rateSource, validateSnapshot,
+} from '../src/rate-snapshot.ts';
 
 export const ecbDailyUrl = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
 export const defaultOutput = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/rates.json');
-const dayMs = 86_400_000;
+// A broad sanity band for yen per euro (about 177 in 2026) that catches gross feed or parsing errors.
+const jpyPerEuroRange = [50, 500];
 const maxXmlLength = 1_000_000;
 
 function attributes(tag) {
@@ -40,11 +43,19 @@ export function parseEcbXml(xml) {
   return { date: dates[0], rates };
 }
 
-/** Builds the verified snapshot from feed XML. `now` rejects publication dates in the future. */
+/**
+ * Builds the verified snapshot from feed XML. `now` rejects publication dates more than a day in
+ * the future and dates the app would flag as outdated, so a stale feed stops publication.
+ */
 export function buildSnapshot(xml, now = Date.now()) {
   const { date, rates } = parseEcbXml(xml);
-  if (Date.parse(`${date}T00:00:00Z`) > now + dayMs) throw new RateDataError(`The ECB feed date is in the future: ${date}.`);
+  if (ageInDays(date, now) < -1) throw new RateDataError(`The ECB feed date is in the future: ${date}.`);
+  if (isOutdated(date, now)) throw new RateDataError(`The ECB feed is outdated: it is dated ${date}, more than ${outdatedAfterDays} days ago.`);
   if ('EUR' in rates && rates.EUR !== 1) throw new RateDataError(`The ECB feed lists EUR as ${rates.EUR}, not 1.`);
+  const [minJpy, maxJpy] = jpyPerEuroRange;
+  if (rates.JPY < minJpy || rates.JPY > maxJpy) {
+    throw new RateDataError(`The ECB feed lists JPY as ${rates.JPY} per EUR, outside the expected ${minJpy}-${maxJpy} range.`);
+  }
   return validateSnapshot({ source: rateSource, date, unitsPerEuro: { ...rates, EUR: 1 } });
 }
 
@@ -56,9 +67,35 @@ export async function fetchEcbXml(fetchImpl = fetch, url = ecbDailyUrl) {
     throw new RateDataError(`Could not fetch the ECB feed: ${error instanceof Error ? error.message : error}`);
   }
   if (!response.ok) throw new RateDataError(`Could not fetch the ECB feed: HTTP ${response.status}.`);
-  const xml = await response.text();
-  if (xml.length > maxXmlLength) throw new RateDataError('The ECB feed was unexpectedly large.');
-  return xml;
+  return readLimitedText(response);
+}
+
+/** Reads the body as text, stopping as soon as it exceeds `maxXmlLength` bytes. */
+async function readLimitedText(response) {
+  const tooLarge = () => new RateDataError('The ECB feed was unexpectedly large.');
+  const declared = Number(response.headers?.get?.('content-length'));
+  if (declared > maxXmlLength) {
+    await response.body?.cancel?.();
+    throw tooLarge();
+  }
+  if (!response.body?.getReader) {
+    const xml = await response.text();
+    if (Buffer.byteLength(xml) > maxXmlLength) throw tooLarge();
+    return xml;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let xml = '';
+  let received = 0;
+  for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+    received += chunk.value.byteLength;
+    if (received > maxXmlLength) {
+      await reader.cancel();
+      throw tooLarge();
+    }
+    xml += decoder.decode(chunk.value, { stream: true });
+  }
+  return xml + decoder.decode();
 }
 
 /**

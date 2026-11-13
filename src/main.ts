@@ -24,10 +24,12 @@ const moneyFormatters = new Map<string, Intl.NumberFormat>();
 const rateFormat = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 });
 const dateFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
 const percentFormat = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
-const currencyNames = new Intl.DisplayNames('en', { type: 'currency' });
+let currencyNames: Intl.DisplayNames | undefined;
 let snapshot: RateSnapshot | null = null;
 let ratesStatus: 'loading' | 'ready' | 'unavailable' = 'loading';
 let announcementTimer: ReturnType<typeof setTimeout> | undefined;
+// Results are announced only after the visitor has used the form, never for the initial page load.
+let hasInteracted = false;
 
 function moneyFormatter(currency: string) {
   if (!moneyFormatters.has(currency)) {
@@ -62,17 +64,23 @@ function moneySymbol(currency: string) {
 function currencyLabel(code: string) {
   let name: string | undefined;
   try {
+    currencyNames ??= new Intl.DisplayNames('en', { type: 'currency' });
     name = currencyNames.of(code);
   } catch {
-    // Fall back to the bare code for anything the runtime cannot name.
+    // Fall back to the bare code when the runtime lacks currency names or cannot name this one.
   }
   return name && name !== code ? `${code} · ${name}` : code;
+}
+
+/** USD when listed; otherwise the first listed currency, so the select never ends up empty. */
+function preferredCurrency(codes: string[]) {
+  return codes.includes(defaultCurrency) ? defaultCurrency : codes[0];
 }
 
 function setCurrencyOptions(codes: string[]) {
   const selected = currencyField.value;
   currencyField.replaceChildren(...codes.map((code) => new Option(currencyLabel(code), code)));
-  currencyField.value = codes.includes(selected) ? selected : defaultCurrency;
+  currencyField.value = codes.includes(selected) ? selected : preferredCurrency(codes);
   return currencyField.value !== selected;
 }
 
@@ -168,6 +176,7 @@ function render(announce = true) {
   byId('home-share-note').textContent = home.amount === null ? '' : `Of ${formatMoney(home.amount, currency, home.precision)}`;
 
   if (announce) {
+    hasInteracted = true;
     clearTimeout(announcementTimer);
     announcementTimer = setTimeout(() => {
       const metrics = [
@@ -232,7 +241,7 @@ byId('reset').addEventListener('click', () => {
   presetField.value = defaultPreset;
   priceField.value = priceField.defaultValue;
   japanField.value = japanField.defaultValue;
-  currencyField.value = defaultCurrency;
+  currencyField.value = preferredCurrency(Array.from(currencyField.options, (option) => option.value));
   showHomeField();
   render();
 });
@@ -251,5 +260,6 @@ void loadRates().then((loaded) => {
     selectionChanged = codes.join() !== listed.join() && setCurrencyOptions(codes);
   }
   if (selectionChanged || !homePayByCurrency.has(currencyField.value)) showHomeField();
-  render(false);
+  // Rates can arrive after the visitor starts typing; tell them the conversion changed.
+  render(hasInteracted);
 });
