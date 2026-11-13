@@ -140,7 +140,7 @@ function render(announce = true) {
   byId('converted').textContent = convertedText;
   byId('rate-note').textContent = rate?.note ?? ' · Exchange rate unavailable';
   byId('rate-pair').hidden = !rate;
-  byId('rate-pair').textContent = rate ? `Exchange rate used: 1 ${currency} = ${rateFormat.format(rate.yenPerUnit)} JPY.` : '';
+  byId('rate-pair').textContent = rate ? `Exchange rate used: 1 ${currency} = ${rateFormat.format(rate.yenPerUnit)} JPY` : '';
   byId('japan-share').textContent = japanShareText;
   byId('home-share').textContent = formatShare(homeShare);
   byId('japan-share-note').hidden = japan.amount === null;
