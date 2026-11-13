@@ -255,6 +255,10 @@ void loadRates().then((loaded) => {
   ratesStatus = loaded ? 'ready' : 'unavailable';
   let selectionChanged = false;
   if (loaded) {
+    const sourceName = `${loaded.source} reference rates`;
+    const sourceLink = byId('rate-source');
+    sourceLink.textContent = sourceName;
+    sourceLink.setAttribute('aria-label', `${sourceName} (opens in a new tab)`);
     const codes = comparisonCurrencies(loaded);
     const listed = Array.from(currencyField.options, (option) => option.value);
     selectionChanged = codes.join() !== listed.join() && setCurrencyOptions(codes);

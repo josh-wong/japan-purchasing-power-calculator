@@ -230,13 +230,25 @@ it('shows the source, full date, and numeric pair for an available rate', () => 
   expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 USD = 159.234 JPY');
   expect(field('rate-note').textContent).toBe(' · November 11, 2026');
   const link = field('rate-note').parentElement.querySelector('a');
-  expect(link.textContent).toBe('ECB reference rates');
+  expect(link.textContent).toBe('European Central Bank reference rates');
+  expect(link.getAttribute('aria-label')).toBe('European Central Bank reference rates (opens in a new tab)');
   expect(link.href).toContain('ecb.europa.eu');
   change('currency', 'EUR', 'change');
   expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 EUR = 177.18 JPY');
   expect(field('converted').textContent).toBe('€28.22');
   change('currency', 'GBP', 'change');
   expect(field('rate-pair').textContent).toBe('Exchange rate used: 1 GBP = 211.892 JPY');
+});
+
+it('shows the snapshot source as the link text instead of assuming the ECB', async () => {
+  await open({ fetchImpl: async () => respond({ ...rates, source: 'Example Rates Desk' }) });
+  expect(field('rate-source').textContent).toBe('Example Rates Desk reference rates');
+});
+
+it('keeps the default source link text while rates are loading or unavailable', async () => {
+  await open({ fetchImpl: async () => { throw new TypeError('offline'); } });
+  expect(field('rate-source').textContent).toBe('ECB reference rates');
+  expect(field('rate-source').getAttribute('aria-label')).toBe('ECB reference rates (opens in a new tab)');
 });
 
 it.each([
