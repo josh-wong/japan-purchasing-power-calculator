@@ -26,6 +26,8 @@ const fieldErrors = new Map<HTMLInputElement, AmountError | null>();
 const form = document.querySelector('form')!;
 const formatters = new Map<string, Intl.NumberFormat>();
 const dateFormatters = new Map<string, Intl.DateTimeFormat>();
+// Entries, presets, and example incomes keep comma grouping in every language, matching what the parser accepts.
+const wholeNumberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const currencyNames = new Map<string, Intl.DisplayNames | null>();
 let snapshot: RateSnapshot | null = null;
 let ratesStatus: 'loading' | 'ready' | 'unavailable' = 'loading';
@@ -40,14 +42,15 @@ function numberFormat(options: Intl.NumberFormatOptions, locale = intlLocale()) 
   return formatters.get(key)!;
 }
 
-function moneyFormatter(currency: string, locale?: string) {
-  return numberFormat({ style: 'currency', currency }, locale);
+// Money uses en-US in both languages, so symbols stay the same (CN¥, not 元) and entries keep one format.
+function moneyFormatter(currency: string) {
+  return numberFormat({ style: 'currency', currency }, 'en-US');
 }
 
-function enteredMoneyFormatter(currency: string, precision: number, locale?: string) {
-  const standard = moneyFormatter(currency, locale);
+function enteredMoneyFormatter(currency: string, precision: number) {
+  const standard = moneyFormatter(currency);
   if (precision <= (standard.resolvedOptions().maximumFractionDigits ?? 2)) return standard;
-  return numberFormat({ style: 'currency', currency, minimumFractionDigits: precision, maximumFractionDigits: precision }, locale);
+  return numberFormat({ style: 'currency', currency, minimumFractionDigits: precision, maximumFractionDigits: precision }, 'en-US');
 }
 
 function formatMoney(amount: number, currency: string, precision = 0) {
@@ -73,13 +76,19 @@ function moneySymbol(currency: string) {
 
 function currencyLabel(code: string) {
   const key = intlLocale();
+  if (!currencyNames.has(key)) {
+    try {
+      currencyNames.set(key, new Intl.DisplayNames(key, { type: 'currency' }));
+    } catch {
+      // The runtime lacks currency names, so every label falls back to the bare code.
+      currencyNames.set(key, null);
+    }
+  }
   let name: string | undefined;
   try {
-    if (!currencyNames.has(key)) currencyNames.set(key, new Intl.DisplayNames(key, { type: 'currency' }));
     name = currencyNames.get(key)?.of(code);
   } catch {
-    // Fall back to the bare code when the runtime lacks currency names or cannot name this one.
-    currencyNames.set(key, null);
+    // Only this code falls back to the bare code.
   }
   return name && name !== code ? `${code} · ${name}` : code;
 }
@@ -125,8 +134,7 @@ function exampleIncome(currency: string) {
   if (!units || !usd) return null;
   const convertedIncome = Number(homeField.defaultValue.replaceAll(',', '')) * units / usd;
   const increment = convertedIncome >= 100_000 ? 10_000 : 1_000;
-  // Plain grouping digits, so the prefilled value parses the same in every language.
-  return numberFormat({ maximumFractionDigits: 0 }, 'en-US').format(Math.ceil(convertedIncome / increment) * increment);
+  return wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
 }
 
 function errorText(error: AmountError) {
@@ -254,8 +262,7 @@ form.addEventListener('focusout', (event) => {
   const parsed = parseAmount(field.value, field === priceField, currency);
   showError(field, parsed.error);
   if (parsed.amount === null) return;
-  // Entries keep comma grouping and a period in every language, matching what the parser accepts.
-  field.value = enteredMoneyFormatter(currency, parsed.precision ?? 0, 'en-US').formatToParts(parsed.amount)
+  field.value = enteredMoneyFormatter(currency, parsed.precision ?? 0).formatToParts(parsed.amount)
     .filter((part) => part.type !== 'currency' && part.type !== 'literal')
     .map((part) => part.value)
     .join('');
@@ -266,7 +273,7 @@ form.addEventListener('focusout', (event) => {
 form.addEventListener('change', (event) => {
   if (event.target === presetField) {
     if (presetField.value !== '') {
-      priceField.value = numberFormat({ maximumFractionDigits: 0 }, 'en-US').format(Number(presetField.value));
+      priceField.value = wholeNumberFormat.format(Number(presetField.value));
       showError(priceField, null);
     }
   } else if (event.target === currencyField) {
@@ -292,6 +299,8 @@ byId('reset').addEventListener('click', () => {
 
 // Switching language changes only text and formatting. Entered values, results, and errors stay.
 onLocaleChange(() => {
+  // A pending announcement holds text in the previous language.
+  clearTimeout(announcementTimer);
   setCurrencyOptions(listedCurrencies());
   showPresetLabels();
   showHomeLabels();

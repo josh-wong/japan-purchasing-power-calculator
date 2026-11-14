@@ -1,8 +1,8 @@
 import { en, type Messages } from './en';
 import { ja } from './ja';
 
-// The display language. It starts from the browser's preferred language and stays in memory for
-// the visit: it is never stored, put in the address, or sent anywhere.
+// The display language. Each page load starts from the browser's preferred language, and a switch
+// lasts until the visitor leaves the page: it is never stored, put in the address, or sent anywhere.
 export type Locale = 'en' | 'ja';
 
 const catalogs: Record<Locale, Messages> = { en, ja };

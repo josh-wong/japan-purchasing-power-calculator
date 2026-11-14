@@ -187,6 +187,8 @@ export function startAnalytics(
     win.gtag?.('consent', 'update', { analytics_storage: 'granted' });
   }
   const referrer = pageReferrer(doc.referrer);
+  // Also set globally, so automatic events after the page view use the English title too.
+  if (pageTitle) win.gtag?.('set', { page_title: pageTitle });
   win.gtag?.('config', id, {
     page_location: pageLocation(win.location.href),
     ...(pageTitle ? { page_title: pageTitle } : {}),

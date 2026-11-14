@@ -263,6 +263,8 @@ it('shows the consent panel in Japanese, follows language switches, and sends on
   expect(document.title).toBe('Yen Lens：日本の購買力計算ツール');
   expect(configs()).toHaveLength(1);
   expect(configs()[0][2].page_title).toBe('Yen Lens: Japan purchasing power calculator');
+  const sets = (window.dataLayer ?? []).map(entry => Array.from(entry)).filter(([command]) => command === 'set');
+  expect(sets).toEqual([['set', { page_title: 'Yen Lens: Japan purchasing power calculator' }]]);
   expect(dataLayerText()).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
   expect(localStorage.length).toBe(1);
 

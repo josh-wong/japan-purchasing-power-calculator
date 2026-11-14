@@ -476,3 +476,23 @@ it('shows Japanese rate states and tiny shares', async () => {
   await open({ now: '2026-11-30T12:00:00Z' });
   expect(field('rate-note').textContent).toBe(' · 2026年11月11日 · 古いレート');
 });
+
+it('keeps currency symbols and the formatted entry the same in Japanese', async () => {
+  change('currency', 'CNY', 'change');
+  const englishPrefix = field('home-prefix').textContent;
+  const englishAmount = field('equivalent').textContent;
+  change('language', 'ja', 'change');
+  expect(field('home-prefix').textContent).toBe(englishPrefix);
+  expect(field('equivalent').textContent).toBe(englishAmount);
+  expect(englishAmount).toMatch(/^CN¥/);
+  change('home', '12345.6');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('home').value).toBe('12,345.60');
+});
+
+it('drops a pending announcement when the language changes', async () => {
+  change('home', '4000.01');
+  change('language', 'ja', 'change');
+  await vi.advanceTimersByTimeAsync(450);
+  expect(field('result-announcement').textContent).toBe('');
+});
