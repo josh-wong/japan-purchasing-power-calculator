@@ -1,7 +1,11 @@
-import { parseAmount, calculate } from './calculator';
+import { parseAmount, calculate, type AmountError } from './calculator';
 import { bundledCurrencyCodes } from './currencies';
+import { catalog, initLanguage, intlLocale, messages, onLocaleChange } from './i18n';
 import { comparisonCurrencies, isOutdated, yenPerUnit, type RateSnapshot } from './rate-snapshot';
 import { loadRates } from './rates';
+
+// Translate the static page before anything else renders, so the first results use the same language.
+initLanguage();
 
 const currencySymbols: Record<string, string> = { USD: 'US$', JPY: 'JP¥', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$', HKD: 'HK$', SGD: 'S$' };
 function byId(id: string): HTMLElement {
@@ -12,38 +16,41 @@ function byId(id: string): HTMLElement {
 const presetField = byId('preset') as HTMLSelectElement;
 const priceField = byId('price') as HTMLInputElement;
 const defaultPreset = priceField.defaultValue.replaceAll(',', '');
-const wholeNumberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const japanField = byId('japan') as HTMLInputElement;
 const homeField = byId('home') as HTMLInputElement;
 const currencyField = byId('currency') as HTMLSelectElement;
 const defaultCurrency = 'USD';
 const homePayByCurrency = new Map([[defaultCurrency, homeField.defaultValue]]);
-const homeErrorByCurrency = new Map<string, string>();
+const homeErrorByCurrency = new Map<string, AmountError | null>();
+const fieldErrors = new Map<HTMLInputElement, AmountError | null>();
 const form = document.querySelector('form')!;
-const moneyFormatters = new Map<string, Intl.NumberFormat>();
-const rateFormat = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 });
-const dateFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
-const percentFormat = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
-let currencyNames: Intl.DisplayNames | undefined;
+const formatters = new Map<string, Intl.NumberFormat>();
+const dateFormatters = new Map<string, Intl.DateTimeFormat>();
+// Entries, presets, and example incomes keep comma grouping in every language, matching what the parser accepts.
+const wholeNumberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const currencyNames = new Map<string, Intl.DisplayNames | null>();
 let snapshot: RateSnapshot | null = null;
 let ratesStatus: 'loading' | 'ready' | 'unavailable' = 'loading';
 let announcementTimer: ReturnType<typeof setTimeout> | undefined;
 // Results are announced only after the visitor has used the form, never for the initial page load.
 let hasInteracted = false;
 
+/** A cached number formatter, for the selected language unless another locale is given. */
+function numberFormat(options: Intl.NumberFormatOptions, locale = intlLocale()) {
+  const key = `${locale} ${JSON.stringify(options)}`;
+  if (!formatters.has(key)) formatters.set(key, new Intl.NumberFormat(locale, options));
+  return formatters.get(key)!;
+}
+
+// Money uses en-US in both languages, so symbols stay the same (CN¥, not 元) and entries keep one format.
 function moneyFormatter(currency: string) {
-  if (!moneyFormatters.has(currency)) {
-    moneyFormatters.set(currency, new Intl.NumberFormat('en-US', { style: 'currency', currency }));
-  }
-  return moneyFormatters.get(currency)!;
+  return numberFormat({ style: 'currency', currency }, 'en-US');
 }
 
 function enteredMoneyFormatter(currency: string, precision: number) {
   const standard = moneyFormatter(currency);
   if (precision <= (standard.resolvedOptions().maximumFractionDigits ?? 2)) return standard;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency, minimumFractionDigits: precision, maximumFractionDigits: precision,
-  });
+  return numberFormat({ style: 'currency', currency, minimumFractionDigits: precision, maximumFractionDigits: precision }, 'en-US');
 }
 
 function formatMoney(amount: number, currency: string, precision = 0) {
@@ -56,18 +63,32 @@ function formatMoney(amount: number, currency: string, precision = 0) {
     .join('');
 }
 
+function formatDate(isoDate: string) {
+  const key = intlLocale();
+  if (!dateFormatters.has(key)) dateFormatters.set(key, new Intl.DateTimeFormat(key, { dateStyle: 'long', timeZone: 'UTC' }));
+  return dateFormatters.get(key)!.format(new Date(isoDate));
+}
+
 function moneySymbol(currency: string) {
   return currencySymbols[currency] ?? moneyFormatter(currency).formatToParts(0)
     .find((part) => part.type === 'currency')!.value;
 }
 
 function currencyLabel(code: string) {
+  const key = intlLocale();
+  if (!currencyNames.has(key)) {
+    try {
+      currencyNames.set(key, new Intl.DisplayNames(key, { type: 'currency' }));
+    } catch {
+      // The runtime lacks currency names, so every label falls back to the bare code.
+      currencyNames.set(key, null);
+    }
+  }
   let name: string | undefined;
   try {
-    currencyNames ??= new Intl.DisplayNames('en', { type: 'currency' });
-    name = currencyNames.of(code);
+    name = currencyNames.get(key)?.of(code);
   } catch {
-    // Fall back to the bare code when the runtime lacks currency names or cannot name this one.
+    // Only this code falls back to the bare code.
   }
   return name && name !== code ? `${code} · ${name}` : code;
 }
@@ -84,6 +105,18 @@ function setCurrencyOptions(codes: string[]) {
   return currencyField.value !== selected;
 }
 
+function listedCurrencies() {
+  return Array.from(currencyField.options, (option) => option.value);
+}
+
+function showPresetLabels() {
+  const { customPrice, presets } = messages().form;
+  for (const option of Array.from(presetField.options)) {
+    const name = (presets as Record<string, string>)[option.value];
+    option.textContent = option.value === '' ? customPrice : `${name} · ${formatMoney(Number(option.value), 'JPY')}`;
+  }
+}
+
 function rateFor(currency: string) {
   if (!snapshot) return null;
   const yen = yenPerUnit(snapshot, currency);
@@ -91,7 +124,7 @@ function rateFor(currency: string) {
   const outdated = isOutdated(snapshot.date, Date.now());
   return {
     yenPerUnit: yen,
-    note: ` · ${dateFormat.format(new Date(snapshot.date))}${outdated ? ' · Outdated' : ''}`,
+    note: ` · ${formatDate(snapshot.date)}${outdated ? ` · ${messages().result.outdated}` : ''}`,
   };
 }
 
@@ -104,12 +137,24 @@ function exampleIncome(currency: string) {
   return wholeNumberFormat.format(Math.ceil(convertedIncome / increment) * increment);
 }
 
-function showError(field: HTMLInputElement, error: string) {
+function errorText(error: AmountError) {
+  const text = messages().errors;
+  return error.code === 'decimals' ? text.decimals(error.decimals) : text[error.code];
+}
+
+function showError(field: HTMLInputElement, error: AmountError | null) {
   if (field === homeField) homeErrorByCurrency.set(currencyField.value, error);
+  else fieldErrors.set(field, error);
   const message = byId(`${field.id}-error`);
   field.setAttribute('aria-invalid', String(Boolean(error)));
-  message.textContent = error;
+  message.textContent = error ? errorText(error) : '';
   message.hidden = !error;
+}
+
+function showHomeLabels() {
+  const currency = currencyField.value;
+  byId('home-label').textContent = messages().form.homeLabel(currency);
+  byId('home-prefix').textContent = moneySymbol(currency);
 }
 
 function showHomeField() {
@@ -120,21 +165,19 @@ function showHomeField() {
     if (example !== null) homePayByCurrency.set(currency, example);
   }
   homeField.value = homePayByCurrency.get(currency) ?? '';
-  byId('home-label').textContent = `Monthly income (${currency})`;
-  byId('home-prefix').textContent = moneySymbol(currency);
-  showError(homeField, homeErrorByCurrency.get(currency) ?? '');
+  showHomeLabels();
+  showError(homeField, homeErrorByCurrency.get(currency) ?? null);
 }
 
+/** The displayed share, and whether it is a positive share too small to show. */
 function formatShare(share: number | null) {
-  if (share === null) return '—';
-  return share > 0 && share < 0.0001 ? '<0.01%' : percentFormat.format(share);
-}
-
-function spokenShare(text: string) {
-  return text === '<0.01%' ? 'less than 0.01%' : text;
+  if (share === null) return { text: '—', tiny: false };
+  if (share > 0 && share < 0.0001) return { text: messages().result.tinyShare, tiny: true };
+  return { text: numberFormat({ style: 'percent', maximumFractionDigits: 2 }).format(share), tiny: false };
 }
 
 function render(announce = true) {
+  const text = messages();
   const currency = currencyField.value;
   const price = parseAmount(priceField.value, true, 'JPY');
   const japan = parseAmount(japanField.value, false, 'JPY');
@@ -148,51 +191,54 @@ function render(announce = true) {
   const equivalentText = equivalent === null ? '—' : formatMoney(equivalent, currency);
   const convertedText = converted === null ? '—' : formatMoney(converted, currency);
   // The yen figure repeats the amount when the comparison currency is yen, so it is left out.
-  const equivalentYenPhrase = equivalentYen !== null && currency !== 'JPY' ? `${formatMoney(equivalentYen, 'JPY')} at the ECB rate` : null;
+  const equivalentYenAmount = equivalentYen !== null && currency !== 'JPY' ? formatMoney(equivalentYen, 'JPY') : null;
 
-  let resultNote = 'Enter a price in yen to compare the cost.';
+  let resultNote = text.result.promptPrice;
   if (price.amount !== null) {
     if (japan.amount === null) {
-      resultNote = 'Enter a monthly income in yen to see the equivalent cost.';
+      resultNote = text.result.promptJapan;
     } else if (home.amount === null) {
-      resultNote = 'Enter a comparison income to see the equivalent cost.';
+      resultNote = text.result.promptHome;
     } else {
-      const shareDescription = japanShare !== null && japanShare > 0 && japanShareText !== '<0.01%'
-        ? `about ${japanShareText}`
-        : spokenShare(japanShareText);
-      resultNote = `${formatMoney(price.amount, 'JPY', price.precision)} is ${shareDescription} of the entered income in yen. The same share of the comparison income is ${equivalentText}.`;
+      const shareDescription = japanShare !== null && japanShare > 0 && !japanShareText.tiny
+        ? text.result.aboutShare(japanShareText.text)
+        : japanShareText.tiny ? text.result.tinyShareSpoken : japanShareText.text;
+      resultNote = text.result.note(formatMoney(price.amount, 'JPY', price.precision), shareDescription, equivalentText);
     }
   }
 
   byId('equivalent').textContent = equivalentText;
-  byId('equivalent-yen').hidden = equivalentYenPhrase === null;
-  byId('equivalent-yen').textContent = equivalentYenPhrase === null ? '' : `≈ ${equivalentYenPhrase}`;
+  byId('equivalent-yen').hidden = equivalentYenAmount === null;
+  byId('equivalent-yen').textContent = equivalentYenAmount === null ? '' : text.result.equivalentYen(equivalentYenAmount);
   byId('result-note').textContent = resultNote;
   byId('converted').textContent = convertedText;
-  byId('rate-note').textContent = rate?.note ?? (ratesStatus === 'loading' ? ' · Loading exchange rate…' : ' · Exchange rate unavailable');
+  const sourceName = snapshot ? text.result.sourceName(snapshot.source) : text.result.defaultSource;
+  byId('rate-source').textContent = sourceName;
+  byId('rate-source').setAttribute('aria-label', text.result.newTab(sourceName));
+  byId('rate-note').textContent = rate?.note ?? (ratesStatus === 'loading' ? text.result.rateLoading : text.result.rateUnavailable);
   byId('rate-pair').hidden = !rate;
-  byId('rate-pair').textContent = rate ? `Exchange rate used: 1 ${currency} = ${rateFormat.format(rate.yenPerUnit)} JPY` : '';
-  byId('japan-share').textContent = japanShareText;
-  byId('home-share').textContent = formatShare(homeShare);
+  byId('rate-pair').textContent = rate
+    ? text.result.ratePair(currency, numberFormat({ maximumSignificantDigits: 6 }).format(rate.yenPerUnit))
+    : '';
+  byId('japan-share').textContent = japanShareText.text;
+  byId('home-share').textContent = formatShare(homeShare).text;
   byId('japan-share-note').hidden = japan.amount === null;
   byId('home-share-note').hidden = home.amount === null;
-  byId('japan-share-note').textContent = japan.amount === null ? '' : `Of ${formatMoney(japan.amount, 'JPY', japan.precision)}`;
-  byId('home-share-note').textContent = home.amount === null ? '' : `Of ${formatMoney(home.amount, currency, home.precision)}`;
+  byId('japan-share-note').textContent = japan.amount === null ? '' : text.result.shareOf(formatMoney(japan.amount, 'JPY', japan.precision));
+  byId('home-share-note').textContent = home.amount === null ? '' : text.result.shareOf(formatMoney(home.amount, currency, home.precision));
 
   if (announce) {
     hasInteracted = true;
     clearTimeout(announcementTimer);
     announcementTimer = setTimeout(() => {
-      const equivalentSuffix = equivalentYenPhrase === null ? '' : `, about ${equivalentYenPhrase}`;
+      const spoken = text.announcement;
       const metrics = [
-        ['equivalent', 'Equivalent cost at the same share of income', equivalentSuffix], ['converted', 'Price at the exchange rate', ''],
+        [equivalentText, spoken.equivalent, equivalentYenAmount === null ? '' : spoken.equivalentYen(equivalentYenAmount)],
+        [convertedText, spoken.converted, ''],
       ];
-      const spokenResults = metrics.map(([id, label, suffix]) => {
-        const value = byId(id).textContent ?? '';
-        return value === '—' ? '' : `${label} ${value}${suffix}. `;
-      }).join('');
-      const conversionStatus = price.amount !== null && !rate && ratesStatus !== 'loading' ? 'Exchange rate unavailable.' : '';
-      byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(' ');
+      const spokenResults = metrics.filter(([value]) => value !== '—').map(([value, label, suffix]) => spoken.result(label, value, suffix));
+      const conversionStatus = price.amount !== null && !rate && ratesStatus !== 'loading' ? spoken.rateUnavailable : '';
+      byId('result-announcement').textContent = [...spokenResults, conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(spoken.separator);
     }, 450);
   }
 }
@@ -204,7 +250,7 @@ form.addEventListener('input', (event) => {
     homePayByCurrency.set(currencyField.value, field.value);
   }
   if (field === priceField || field === japanField || field === homeField) {
-    showError(field, '');
+    showError(field, null);
     render();
   }
 });
@@ -228,7 +274,7 @@ form.addEventListener('change', (event) => {
   if (event.target === presetField) {
     if (presetField.value !== '') {
       priceField.value = wholeNumberFormat.format(Number(presetField.value));
-      showError(priceField, '');
+      showError(priceField, null);
     }
   } else if (event.target === currencyField) {
     showHomeField();
@@ -239,19 +285,32 @@ form.addEventListener('change', (event) => {
 });
 
 byId('reset').addEventListener('click', () => {
-  for (const field of [priceField, japanField, homeField]) showError(field, '');
+  for (const field of [priceField, japanField, homeField]) showError(field, null);
   homePayByCurrency.clear();
   homeErrorByCurrency.clear();
   homePayByCurrency.set(defaultCurrency, homeField.defaultValue);
   presetField.value = defaultPreset;
   priceField.value = priceField.defaultValue;
   japanField.value = japanField.defaultValue;
-  currencyField.value = preferredCurrency(Array.from(currencyField.options, (option) => option.value));
+  currencyField.value = preferredCurrency(listedCurrencies());
   showHomeField();
   render();
 });
 
+// Switching language changes only text and formatting. Entered values, results, and errors stay.
+onLocaleChange(() => {
+  // A pending announcement holds text in the previous language.
+  clearTimeout(announcementTimer);
+  setCurrencyOptions(listedCurrencies());
+  showPresetLabels();
+  showHomeLabels();
+  for (const field of [priceField, japanField]) showError(field, fieldErrors.get(field) ?? null);
+  showError(homeField, homeErrorByCurrency.get(currencyField.value) ?? null);
+  render(false);
+});
+
 setCurrencyOptions(bundledCurrencyCodes);
+showPresetLabels();
 showHomeField();
 render(false);
 
@@ -260,13 +319,8 @@ void loadRates().then((loaded) => {
   ratesStatus = loaded ? 'ready' : 'unavailable';
   let selectionChanged = false;
   if (loaded) {
-    const sourceName = `${loaded.source} reference rates`;
-    const sourceLink = byId('rate-source');
-    sourceLink.textContent = sourceName;
-    sourceLink.setAttribute('aria-label', `${sourceName} (opens in a new tab)`);
     const codes = comparisonCurrencies(loaded);
-    const listed = Array.from(currencyField.options, (option) => option.value);
-    selectionChanged = codes.join() !== listed.join() && setCurrencyOptions(codes);
+    selectionChanged = codes.join() !== listedCurrencies().join() && setCurrencyOptions(codes);
   }
   if (selectionChanged || !homePayByCurrency.has(currencyField.value)) showHomeField();
   // Rates can arrive after the visitor starts typing; tell them the conversion changed.
@@ -274,7 +328,10 @@ void loadRates().then((loaded) => {
 });
 
 // Runs after the calculator is wired so analytics can never block or alter it. Builds without
-// a measurement ID drop this branch, so they contain no analytics code at all.
+// a measurement ID drop this branch, so they contain no analytics code at all. Only the fixed
+// English page title is passed; analytics never reads the form or the selected language.
 if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
-  void import('./consent-banner').then(({ initAnalyticsConsent }) => initAnalyticsConsent());
+  void import('./consent-banner').then(({ initAnalyticsConsent }) => initAnalyticsConsent({
+    pageTitle: catalog('en').meta.calculatorTitle,
+  }));
 }

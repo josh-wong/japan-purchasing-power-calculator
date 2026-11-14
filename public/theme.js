@@ -4,6 +4,11 @@
   const storageKey = 'japan-purchasing-power.theme';
   const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
   const nextMode = { system: 'light', light: 'dark', dark: 'system' };
+  // Button labels for each page language; src/i18n sets <html lang> and announces changes.
+  const labels = {
+    en: { names: { system: 'system', light: 'light', dark: 'dark' }, text: (mode, next) => `Appearance: ${mode}. Switch to ${next}.` },
+    ja: { names: { system: 'システム', light: 'ライト', dark: 'ダーク' }, text: (mode, next) => `外観：${mode}。${next}に切り替えます。` },
+  };
   let theme = 'system';
 
   try {
@@ -21,15 +26,19 @@
   applyTheme();
   systemTheme.addEventListener('change', applyTheme);
 
+  function updateButton() {
+    const button = document.getElementById('theme');
+    if (!button) return;
+    const { names, text } = labels[document.documentElement.lang] ?? labels.en;
+    const label = text(names[theme], names[nextMode[theme]]);
+    button.dataset.mode = theme;
+    button.title = label;
+    button.setAttribute('aria-label', label);
+  }
+
+  document.addEventListener('yenlens:localechange', updateButton);
   document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('theme');
-
-    function updateButton() {
-      const label = `Appearance: ${theme}. Switch to ${nextMode[theme]}.`;
-      button.dataset.mode = theme;
-      button.title = label;
-      button.setAttribute('aria-label', label);
-    }
 
     updateButton();
     button.addEventListener('click', () => {

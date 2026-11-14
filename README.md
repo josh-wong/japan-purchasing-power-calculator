@@ -12,7 +12,7 @@ npm run rates:update
 npm run dev
 ```
 
-The `rates:update` step downloads the current ECB rates. Without it, the app still runs but shows "Exchange rate unavailable". Open the local URL printed by Vite. Financial inputs stay in memory for the visit. Browser storage holds only the appearance preference and, when analytics is configured, the visitor's analytics choice.
+The `rates:update` step downloads the current ECB rates. Without it, the app still runs but shows "Exchange rate unavailable". Open the local URL printed by Vite. Financial inputs stay in memory for the visit. Browser storage holds only the appearance preference and, when analytics is configured, the visitor's analytics choice. The language choice isn't stored.
 
 ## Commands
 
@@ -32,7 +32,7 @@ The default build serves a domain root. For the project Pages path, run `npm run
 
 ## Implementation and rate data
 
-Page markup lives in `index.html` and `privacy.html`, styles in `src/styles.css`, the shared theme script in `public/theme.js`, and form state and rendering in `src/main.ts`. `src/calculator.ts` contains pure parsing and calculation functions. The original [mockup](docs/_planning/v1.0-gui-mockup.html) remains the interaction reference.
+Page markup lives in `index.html` and `privacy.html`, styles in `src/styles.css`, the shared theme script in `public/theme.js`, and form state and rendering in `src/main.ts`. The English and Japanese text lives in `src/i18n/`: `en.ts` and `ja.ts` hold the page text, `consent.ts` holds the consent panel text, and `index.ts` picks the language from the browser and applies it to elements marked with `data-i18n` attributes. The privacy notice keeps a full English and Japanese version in `privacy.html`, and the page shows the one that matches the selected language. `src/calculator.ts` contains pure parsing and calculation functions. The original [mockup](docs/_planning/v1.0-gui-mockup.html) remains the interaction reference.
 
 `scripts/update-rates.mjs` fetches the ECB daily XML feed and writes `public/rates.json`, which Vite serves from the app's own origin. The file holds the publication date, the source, and positive units-per-EUR rates, including EUR at 1. The command exits with an error, and keeps any existing file, when the fetch fails or the data is invalid (for example, a bad date or rate, or a missing JPY rate). `public/rates.json` is generated and ignored by Git.
 

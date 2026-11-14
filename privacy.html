@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Privacy notice · Yen Lens</title>
+  <title data-i18n="meta.privacyTitle">Privacy notice · Yen Lens</title>
   <script src="/theme.js"></script>
   <link rel="stylesheet" href="/src/styles.css">
 </head>
@@ -13,9 +13,16 @@
     <div class="wrap topline-inner">
       <a class="wordmark wordmark-link" href="./"><span class="mark" aria-hidden="true">¥</span><span>Yen Lens</span></a>
       <div class="header-actions">
+        <label class="language-control">
+          <span class="sr-only" data-i18n="header.language">Language</span>
+          <select id="language" class="language-select">
+            <option value="en" lang="en">English</option>
+            <option value="ja" lang="ja">日本語</option>
+          </select>
+        </label>
         <a class="header-action" href="https://github.com/josh-wong/yenlens"
           target="_blank" rel="noopener noreferrer" title="View source on GitHub"
-          aria-label="View source on GitHub (opens in a new tab)">
+          aria-label="View source on GitHub (opens in a new tab)" data-i18n-attr="title=header.github aria-label=header.githubLabel">
           <!-- GitHub mark from Primer Octicons: https://primer.style/octicons/icon/mark-github-16/ -->
           <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
@@ -32,21 +39,22 @@
   </header>
 
   <main class="wrap prose">
+    <div data-locale="en" lang="en">
     <p><a href="./">Back to the calculator</a></p>
     <h1>Privacy notice</h1>
-    <p class="updated">Last updated November 13, 2026</p>
+    <p class="updated">Last updated November 14, 2026</p>
 
     <p>This notice explains what Yen Lens does with information about your visit. The short version: the amounts you enter never leave your browser, and usage analytics runs only if you allow it.</p>
 
     <h2>What stays in your browser</h2>
     <p>The prices, incomes, currencies, and examples you choose stay in your browser’s memory for the current visit. They aren’t saved, and they aren’t sent to this site, to Google, or to anyone else.</p>
-    <p>The site stores two settings in your browser’s local storage: your appearance choice (System, Light, or Dark) and your analytics choice with the date you made it. These settings never leave your device. If your browser blocks storage, the calculator still works, and your choices last for the current visit only. In that case, the analytics cookies also end with the visit.</p>
+    <p>The site stores two settings in your browser’s local storage: your appearance choice (System, Light, or Dark) and your analytics choice with the date you made it. These settings never leave your device. Your language choice isn’t saved; each page opens in your browser’s preferred language. If your browser blocks storage, the calculator still works, and your choices last for the current visit only. In that case, the analytics cookies also end with the visit.</p>
 
     <h2>Usage analytics</h2>
     <p>If you select <strong>Allow analytics</strong>, the site loads Google Analytics to count visits and see which pages people use. Until you allow it, the site doesn’t load any Google code or contact Google. If you decline or don’t choose, nothing is collected.</p>
     <p>When analytics is allowed, Google Analytics receives:</p>
     <ul>
-      <li>The page you view, without any query parameters except campaign tags (such as <code>utm_source</code>), and the page title.</li>
+      <li>The page you view, without any query parameters except campaign tags (such as <code>utm_source</code>), and the page title. The title is always sent in English, whichever language you choose.</li>
       <li>The time and length of your visit, whether you scroll to the bottom of a page, and links you follow to other sites.</li>
       <li>Your browser, operating system, device type, screen size, and language.</li>
       <li>The page that linked you here, if your browser shares it, with the same query parameters removed.</li>
@@ -93,10 +101,74 @@
 
     <h2>Changes to this notice</h2>
     <p>If this notice changes, the date at the top changes too. A change in what analytics collects means you’ll be asked again.</p>
+    </div>
+    <div data-locale="ja" lang="ja" hidden>
+    <p><a href="./">計算ツールに戻る</a></p>
+    <h1>プライバシーに関するお知らせ</h1>
+    <p class="updated">最終更新日：2026年11月14日</p>
+
+    <p>このお知らせでは、Yen Lens が訪問に関する情報をどのように扱うかを説明します。要点は、入力した金額がブラウザーの外に出ることはなく、利用状況の分析は許可した場合にのみ行われるということです。</p>
+
+    <h2>ブラウザー内にとどまる情報</h2>
+    <p>入力した価格や収入、選択した通貨や例は、今回の訪問の間だけブラウザーのメモリに保持されます。これらは保存されず、このサイト、Google、その他の誰にも送信されません。</p>
+    <p>このサイトがブラウザーのローカル ストレージに保存する設定は 2 つです。外観の選択（システム、ライト、ダーク）と、分析に関する選択およびその選択日です。これらの設定がお使いのデバイスの外に出ることはありません。言語の選択は保存されず、各ページはブラウザーで優先される言語で開きます。ブラウザーがストレージをブロックしている場合も計算ツールは動作し、選択内容は今回の訪問の間だけ有効です。その場合、分析用の Cookie も訪問の終了とともに無効になります。</p>
+
+    <h2>利用状況の分析</h2>
+    <p>「<strong>分析を許可</strong>」を選択すると、このサイトは訪問数や利用されているページを把握するために Google アナリティクスを読み込みます。許可するまでは、Google のコードを読み込むことも、Google と通信することもありません。拒否した場合や選択しなかった場合は、何も収集されません。</p>
+    <p>分析を許可した場合、Google アナリティクスは次の情報を受け取ります。</p>
+    <ul>
+      <li>表示したページのアドレスとページ タイトル。アドレスからは、キャンペーン タグ（<code>utm_source</code> など）以外のクエリ パラメーターを削除します。タイトルは、選択した言語にかかわらず英語で送信されます。</li>
+      <li>訪問の日時と長さ、ページの最後までスクロールしたかどうか、他のサイトへのリンクをクリックした場合はそのリンク先。</li>
+      <li>ブラウザー、オペレーティング システム、デバイスの種類、画面サイズ、言語。</li>
+      <li>このサイトへのリンク元のページ（ブラウザーが共有する場合に限ります）。ページのアドレスと同様に、キャンペーン タグ以外のクエリ パラメーターは削除します。</li>
+      <li>IP アドレスから Google が推定するおおよその位置情報（国、地域、市区町村）。Google アナリティクスは IP アドレスを保存しません。</li>
+      <li>再訪問を数えるために Cookie に保存されるランダムな識別子。</li>
+    </ul>
+    <p>入力した金額、選択した通貨や例、計算結果が Google アナリティクスに送られることはありません。Google シグナル、広告向け機能、広告のパーソナライズはオフになっており、このサイトが氏名、メール アドレス、アカウントによって利用者を特定することはありません。</p>
+
+    <h2>Cookie</h2>
+    <p>このサイトが Cookie を設定するのは、分析を許可した後だけです。Cookie はこのサイトのアドレスに限定され、分析をオフにすると削除されます。同じドメインの他のサイトが独自の Cookie を設定する場合がありますが、それらはこのお知らせの対象外です。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">名前</th><th scope="col">目的</th><th scope="col">有効期限</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>jppc_ga</code></td><td>ランダムな識別子でブラウザーを区別します</td><td>分析に関する選択の有効期限まで</td></tr>
+          <tr><td><code>jppc_ga_</code> の後に ID が続くもの</td><td>現在の訪問を記録します</td><td>分析に関する選択の有効期限まで</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>目的と法的根拠</h2>
+    <p>分析によって、計算ツールの利用者数や閲覧されているページがわかり、改善すべき点を判断するのに役立ちます。法的根拠は利用者の同意です（GDPR 第 6 条第 1 項 (a) および Cookie に関する同等の規則）。同意はいつでも撤回できます。撤回しても、撤回前に行われた収集には影響しません。</p>
+
+    <h2>データの受領者</h2>
+    <p>Google は、<a href="https://business.safety.google/adsprocessorterms/?hl=ja">Google 広告データ処理規約</a>に基づくデータ処理者として Google アナリティクスを提供しています。Google は米国やその他の国でデータを処理する場合があります。欧州経済領域、英国、スイスからのデータ移転については、Google は EU-米国データ プライバシー フレームワークと標準契約条項に依拠しています。<a href="https://policies.google.com/technologies/partner-sites?hl=ja">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用</a>と <a href="https://policies.google.com/privacy?hl=ja">Google プライバシー ポリシー</a>をご覧ください。</p>
+    <p>このサイトは GitHub Pages でホストされています。GitHub は、分析の許可の有無にかかわらず、セキュリティのために訪問者の IP アドレスを記録します。<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub の一般プライバシー ステートメント</a>（英語）をご覧ください。</p>
+    <p>利用データが販売されたり、クロスコンテキスト行動広告のために共有されたりすることはありません。</p>
+
+    <h2>データの保存期間</h2>
+    <p>Google アナリティクスは、訪問単位のデータを 14 か月後に削除します。レポートには、月ごとの総訪問数など、個人を特定しない集計値が残る場合があります。分析に関する選択は、選択してから 12 か月後に有効期限が切れ、その後あらためて選択をお尋ねします。分析用の Cookie も同時に有効期限が切れます。</p>
+
+    <h2>選択の変更</h2>
+    <p>各ページ下部の「<strong>分析の設定</strong>」から、いつでも分析を許可したりオフにしたりできます。オフにすると収集はすぐに停止し、分析用の Cookie は削除されます。</p>
+    <p>ブラウザーが Global Privacy Control（GPC）または Do Not Track のシグナルを送信している場合、このサイトはそれを拒否として扱い、確認を表示せず、以前の選択も破棄します。Cookie やスクリプトをブロックしても、計算ツールには影響しません。<a href="https://tools.google.com/dlpage/gaoptout?hl=ja">Google アナリティクス オプトアウト アドオン</a>をインストールすることもできます。</p>
+
+    <h2>利用者の権利</h2>
+    <p>お住まいの地域によっては、個人データへのアクセス、訂正、削除、写しの受け取りを求める権利や、その利用に異議を申し立てたり、利用の制限を求めたりする権利があります。また、お住まいの地域のデータ保護機関に苦情を申し立てる権利もあります。</p>
+    <p>分析データはランダムな識別子にのみ結び付けられているため、サイトの運営者が氏名やメール アドレスから特定の利用者のデータを検索することはできません。請求の際は、お持ちであれば <code>jppc_ga</code> Cookie の値を添えてください。</p>
+
+    <h2>お問い合わせ</h2>
+    <p>このサイトは Josh Wong が運営しており、この処理の責任者です。プライバシーに関するご質問やご請求は <a href="mailto:scotch_nozzles_55@icloud.com">scotch_nozzles_55@icloud.com</a> までお送りください。</p>
+
+    <h2>このお知らせの変更</h2>
+    <p>このお知らせを変更した場合は、冒頭の日付も更新されます。分析で収集する内容が変わった場合は、あらためて選択をお尋ねします。</p>
+    </div>
   </main>
 
   <footer class="wrap site-footer">
-    <p id="footer-links"><a href="./">Calculator</a> · <a href="privacy.html" aria-current="page">Privacy notice</a></p>
+    <p id="footer-links"><a href="./" data-i18n="footer.calculator">Calculator</a> · <a href="privacy.html" aria-current="page" data-i18n="footer.privacy">Privacy notice</a></p>
   </footer>
 
   <script type="module" src="/src/privacy.ts"></script>

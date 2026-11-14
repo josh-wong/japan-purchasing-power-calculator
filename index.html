@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Yen Lens: Japan purchasing power calculator</title>
+  <title data-i18n="meta.calculatorTitle">Yen Lens: Japan purchasing power calculator</title>
   <script src="/theme.js"></script>
   <link rel="stylesheet" href="/src/styles.css">
 </head>
@@ -13,9 +13,16 @@
     <div class="wrap topline-inner">
       <div class="wordmark"><span class="mark" aria-hidden="true">¥</span><span>Yen Lens</span></div>
       <div class="header-actions">
+        <label class="language-control">
+          <span class="sr-only" data-i18n="header.language">Language</span>
+          <select id="language" class="language-select">
+            <option value="en" lang="en">English</option>
+            <option value="ja" lang="ja">日本語</option>
+          </select>
+        </label>
         <a class="header-action" href="https://github.com/josh-wong/yenlens"
           target="_blank" rel="noopener noreferrer" title="View source on GitHub"
-          aria-label="View source on GitHub (opens in a new tab)">
+          aria-label="View source on GitHub (opens in a new tab)" data-i18n-attr="title=header.github aria-label=header.githubLabel">
           <!-- GitHub mark from Primer Octicons: https://primer.style/octicons/icon/mark-github-16/ -->
           <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
@@ -33,20 +40,20 @@
 
   <main class="wrap">
     <div class="intro">
-      <h1>How much of a monthly income in yen would that purchase take?</h1>
-      <p>Enter a purchase price and a monthly income in yen. See what percentage of that income the purchase takes, and what the same percentage would amount to on an income in another currency.</p>
+      <h1 data-i18n="intro.heading">How much of a monthly income in yen would that purchase take?</h1>
+      <p data-i18n="intro.body">Enter a purchase price and a monthly income in yen. See what percentage of that income the purchase takes, and what the same percentage would amount to on an income in another currency.</p>
     </div>
 
     <div class="calculator">
       <form class="panel inputs" aria-labelledby="scenario-title" novalidate>
         <div class="section-head">
-          <h2 id="scenario-title">Comparison setup</h2>
-          <button type="button" class="reset" id="reset">Restore defaults</button>
+          <h2 id="scenario-title" data-i18n="form.title">Comparison setup</h2>
+          <button type="button" class="reset" id="reset" data-i18n="form.reset">Restore defaults</button>
         </div>
 
         <div class="preset-field">
-          <label class="field-label" for="preset">Try an example</label>
-          <p id="example-disclaimer" class="field-note">These are example prices. Actual prices vary.</p>
+          <label class="field-label" for="preset" data-i18n="form.presetLabel">Try an example</label>
+          <p id="example-disclaimer" class="field-note" data-i18n="form.presetDisclaimer">These are example prices. Actual prices vary.</p>
           <select id="preset" aria-describedby="example-disclaimer">
             <option value="" disabled hidden>Custom price</option>
             <option value="1000">Casual lunch · JP¥1,000</option>
@@ -62,7 +69,7 @@
         </div>
 
         <div>
-          <label class="field-label" for="price">Price in Japan (JPY)</label>
+          <label class="field-label" for="price" data-i18n="form.priceLabel">Price in Japan (JPY)</label>
           <div class="input-shell">
             <span class="prefix" aria-hidden="true">JP¥</span>
             <input id="price" type="text" inputmode="decimal" value="5,000" autocomplete="off" aria-describedby="number-format price-error">
@@ -71,10 +78,10 @@
         </div>
 
         <fieldset class="pay-fields" aria-describedby="pay-help">
-          <legend>Monthly take-home income</legend>
-          <p id="pay-help" class="help">Enter monthly income after taxes and other deductions. The incomes can be real or hypothetical. The prefilled amounts are editable examples, not national averages.</p>
+          <legend data-i18n="form.payLegend">Monthly take-home income</legend>
+          <p id="pay-help" class="help" data-i18n="form.payHelp">Enter monthly income after taxes and other deductions. The incomes can be real or hypothetical. The prefilled amounts are editable examples, not national averages.</p>
           <div class="japan-income">
-            <label class="field-label" for="japan">Income in yen (JPY)</label>
+            <label class="field-label" for="japan" data-i18n="form.japanLabel">Income in yen (JPY)</label>
             <div class="input-shell">
               <span class="prefix" aria-hidden="true">JP¥</span>
               <input id="japan" type="text" inputmode="decimal" value="250,000" autocomplete="off" aria-describedby="number-format japan-error">
@@ -82,11 +89,11 @@
             <p id="japan-error" class="error" hidden></p>
           </div>
           <fieldset class="comparison-fields" aria-describedby="comparison-help">
-            <legend>Comparison income</legend>
-            <p id="comparison-help" class="help">Use the example or enter a monthly income in the selected currency.</p>
+            <legend data-i18n="form.comparisonLegend">Comparison income</legend>
+            <p id="comparison-help" class="help" data-i18n="form.comparisonHelp">Use the example or enter a monthly income in the selected currency.</p>
             <div class="form-row">
               <div>
-                <label class="field-label" for="currency">Comparison currency</label>
+                <label class="field-label" for="currency" data-i18n="form.currencyLabel">Comparison currency</label>
                 <select id="currency">
                   <option value="USD">USD · US Dollar</option>
                 </select>
@@ -102,12 +109,12 @@
             </div>
           </fieldset>
         </fieldset>
-        <p id="number-format" class="field-note">Number format: 4,000.50 or 4000.50.</p>
+        <p id="number-format" class="field-note" data-i18n="form.numberFormat">Number format: 4,000.50 or 4000.50.</p>
       </form>
 
       <section class="panel result" aria-labelledby="result-title">
         <div class="result-main">
-          <h2 id="result-title">Same share of income</h2>
+          <h2 id="result-title" data-i18n="result.title">Same share of income</h2>
           <div class="hero-row">
             <p id="equivalent" class="hero-amount">US$80.00</p>
             <p id="equivalent-yen" class="equivalent-yen" hidden></p>
@@ -115,44 +122,42 @@
           <p id="result-note" class="metric-note">JP¥5,000 is about 2% of the entered income in yen. The same share of the comparison income is US$80.00.</p>
         </div>
         <div class="metric">
-          <h3>Price at the exchange rate</h3>
+          <h3 data-i18n="result.convertedTitle">Price at the exchange rate</h3>
           <p id="converted" class="metric-value">—</p>
           <p id="rate-pair" class="metric-note" hidden></p>
           <p class="metric-note"><a id="rate-source" href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noopener noreferrer" aria-label="ECB reference rates (opens in a new tab)">ECB reference rates</a><span id="rate-note"> · Loading exchange rate…</span></p>
         </div>
         <section class="share-section" aria-labelledby="share-title">
-          <h3 id="share-title">Share of monthly take-home income</h3>
+          <h3 id="share-title" data-i18n="result.shareTitle">Share of monthly take-home income</h3>
           <dl class="pay-shares">
             <div class="metric">
-              <dt>Income in yen</dt>
+              <dt data-i18n="result.japanShareLabel">Income in yen</dt>
               <dd>
                 <p class="metric-value" id="japan-share">2%</p>
                 <p class="metric-note" id="japan-share-note">Of JP¥250,000</p>
-                <p class="metric-note">Yen price ÷ income in yen</p>
+                <p class="metric-note" data-i18n="result.japanBasis">Yen price ÷ income in yen</p>
               </dd>
             </div>
             <div class="metric">
-              <dt>Comparison income</dt>
+              <dt data-i18n="result.homeShareLabel">Comparison income</dt>
               <dd>
                 <p class="metric-value" id="home-share">—</p>
                 <p class="metric-note" id="home-share-note">Of US$4,000.00</p>
-                <p class="metric-note">Converted price ÷ comparison income</p>
+                <p class="metric-note" data-i18n="result.homeBasis">Converted price ÷ comparison income</p>
               </dd>
             </div>
           </dl>
         </section>
         <details>
-          <summary>How it’s calculated</summary>
+          <summary data-i18n="method.summary">How it’s calculated</summary>
           <div class="method">
             <ul>
+              <li data-i18n="method.rate">The converted price uses a European Central Bank reference rate before exchange fees. The ECB usually updates its rates each working day.</li>
               <li>
-                The converted price uses a European Central Bank reference rate before exchange fees. The ECB usually updates its rates each working day.
+                <span data-i18n="method.equivalent">Divide the yen price by the income in yen to find the percentage of that income the purchase takes. Apply that percentage to the comparison income to get the equivalent cost.</span>
+                <p data-i18n="method.equivalentNote">When you enter a higher comparison income, the same percentage adds up to a larger amount. The converted price stays the same.</p>
               </li>
-              <li>
-                Divide the yen price by the income in yen to find the percentage of that income the purchase takes. Apply that percentage to the comparison income to get the equivalent cost.
-                <p>When you enter a higher comparison income, the same percentage adds up to a larger amount. The converted price stays the same.</p>
-              </li>
-              <li>Divide the converted price by the comparison income to see what percentage of that income the purchase would cost.</li>
+              <li data-i18n="method.homeShare">Divide the converted price by the comparison income to see what percentage of that income the purchase would cost.</li>
             </ul>
           </div>
         </details>
@@ -162,9 +167,9 @@
   </main>
 
   <footer class="wrap site-footer">
-    <p>Built by <a href="https://www.linkedin.com/in/wongjoshua">Josh Wong</a> to help visitors and residents understand the cost of a purchase relative to monthly incomes in yen and another currency.</p>
-    <p>Estimates for information only, not financial advice. Exchange rates exclude card and exchange fees. Income comparisons use the amounts you enter and do not account for differences in living costs. Your inputs stay in this browser and aren’t saved.</p>
-    <p id="footer-links"><a href="privacy.html">Privacy notice</a></p>
+    <p data-i18n-rich="footer.builtBy">Built by <a href="https://www.linkedin.com/in/wongjoshua" data-slot="link">Josh Wong</a> to help visitors and residents understand the cost of a purchase relative to monthly incomes in yen and another currency.</p>
+    <p data-i18n="footer.disclaimer">Estimates for information only, not financial advice. Exchange rates exclude card and exchange fees. Income comparisons use the amounts you enter and do not account for differences in living costs. Your inputs stay in this browser and aren’t saved.</p>
+    <p id="footer-links"><a href="privacy.html" data-i18n="footer.privacy">Privacy notice</a></p>
   </footer>
 
   <script type="module" src="/src/main.ts"></script>

@@ -58,6 +58,7 @@ afterEach(() => {
   }
   delete navigator.globalPrivacyControl;
   delete navigator.doNotTrack;
+  delete navigator.languages;
   delete window.dataLayer;
   delete window.gtag;
   delete window[`ga-disable-${measurementId}`];
@@ -233,4 +234,62 @@ it('offers the same choice on the privacy notice without linking to itself', asy
   button('Allow analytics').click();
   expect(document.activeElement.textContent).toBe('Privacy notice');
   expect(googleScripts().length).toBe(1);
+});
+
+function prefer(...languages) {
+  Object.defineProperty(navigator, 'languages', { value: languages, configurable: true });
+}
+const configs = () => (window.dataLayer ?? []).map(entry => Array.from(entry)).filter(([command]) => command === 'config');
+
+it('shows the consent panel in Japanese, follows language switches, and sends only the English page title', async () => {
+  prefer('ja-JP');
+  await open();
+  expect(field('consent-title').textContent).toBe('利用状況の分析');
+  expect(button('分析を許可').hidden).toBe(false);
+  expect(button('拒否').hidden).toBe(false);
+  expect(panel().querySelector('a').textContent).toBe('プライバシーに関するお知らせを読む');
+  expect(field('analytics-settings').textContent).toBe('分析の設定');
+
+  change('language', 'en', 'change');
+  expect(field('consent-title').textContent).toBe('Usage analytics');
+  expect(button('Allow analytics')).toBeDefined();
+  expect(field('analytics-settings').textContent).toBe('Analytics settings');
+  change('language', 'ja', 'change');
+
+  button('分析を許可').focus();
+  button('分析を許可').click();
+  await vi.advanceTimersByTimeAsync(50);
+  expect(field('consent-announcement').textContent).toBe('分析を許可しました。ページ下部の「分析の設定」からいつでも変更できます。');
+  expect(document.title).toBe('Yen Lens：日本の購買力計算ツール');
+  expect(configs()).toHaveLength(1);
+  expect(configs()[0][2].page_title).toBe('Yen Lens: Japan purchasing power calculator');
+  const sets = (window.dataLayer ?? []).map(entry => Array.from(entry)).filter(([command]) => command === 'set');
+  expect(sets).toEqual([['set', { page_title: 'Yen Lens: Japan purchasing power calculator' }]]);
+  expect(dataLayerText()).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);
+  expect(localStorage.length).toBe(1);
+
+  field('analytics-settings').click();
+  expect(panel().querySelector('.consent-status').textContent).toBe('現在、分析は許可されています。');
+  change('language', 'en', 'change');
+  expect(panel().querySelector('.consent-status').textContent).toBe('Analytics is currently allowed.');
+});
+
+it('shows the Japanese privacy notice and returns focus to its heading', async () => {
+  prefer('ja');
+  await open({ page: 'privacy' });
+  const [englishNotice, japaneseNotice] = document.querySelectorAll('[data-locale]');
+  expect(englishNotice.hidden).toBe(true);
+  expect(japaneseNotice.hidden).toBe(false);
+  expect(document.title).toBe('プライバシーに関するお知らせ · Yen Lens');
+  expect(field('footer-links').textContent).toBe('計算ツール · プライバシーに関するお知らせ · 分析の設定');
+
+  button('分析を許可').focus();
+  button('分析を許可').click();
+  expect(document.activeElement).toBe(japaneseNotice.querySelector('h1'));
+  expect(configs()[0][2].page_title).toBe('Privacy notice · Yen Lens');
+
+  change('language', 'en', 'change');
+  expect(englishNotice.hidden).toBe(false);
+  expect(japaneseNotice.hidden).toBe(true);
+  expect(document.documentElement.lang).toBe('en');
 });
