@@ -80,7 +80,7 @@ export function initAnalyticsConsent({ linkToNotice = true, pageTitle }: Consent
     const messages = text();
     title.textContent = messages.title;
     description.replaceChildren(messages.description);
-    if (linkToNotice) description.append(' ', element('a', { href: 'privacy.html' }, messages.readNotice));
+    if (linkToNotice) description.append(' ', element('a', { href: 'privacy' }, messages.readNotice));
     allow.textContent = messages.allow;
     decline.textContent = messages.decline;
     close.textContent = messages.close;

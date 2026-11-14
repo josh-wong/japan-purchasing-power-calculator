@@ -81,7 +81,7 @@ it('asks first and contacts Google only after the visitor allows analytics', asy
   expect(panel().getAttribute('aria-labelledby')).toBe('consent-title');
   expect(button('Allow analytics').hidden).toBe(false);
   expect(button('Decline').hidden).toBe(false);
-  expect(panel().querySelector('a').getAttribute('href')).toBe('privacy.html');
+  expect(panel().querySelector('a').getAttribute('href')).toBe('privacy');
   expect(googleScripts().length).toBe(0);
   expect(window.dataLayer).toBeUndefined();
   expect(cookieList()).toEqual(otherSiteCookies);
