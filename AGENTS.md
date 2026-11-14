@@ -21,7 +21,7 @@ For detailed information about this project, refer to the following internal doc
 
 ## Repository overview
 
-Japan Purchasing Power Calculator is an English-language web calculator for visitors and residents comparing purchases in Japan against monthly take-home income in yen and another currency. It leads with an income-based equivalent cost and shows exchange-rate conversion separately.
+Yen Lens is an English-language web calculator for visitors and residents comparing purchases in Japan against monthly take-home income in yen and another currency. It leads with an income-based equivalent cost and shows exchange-rate conversion separately.
 
 ### Key components
 

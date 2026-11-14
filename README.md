@@ -1,6 +1,6 @@
-# Japan Purchasing Power Calculator
+# Yen Lens
 
-Help visitors and residents understand what share of a monthly income in yen a purchase in Japan takes. The main result applies that share to a comparison income in another currency to show the equivalent cost. Exchange-rate conversion appears separately. The incomes can be real or hypothetical.
+Yen Lens is a Japan purchasing power calculator. It helps visitors and residents understand what share of a monthly income in yen a purchase in Japan takes. The main result applies that share to a comparison income in another currency to show the equivalent cost. Exchange-rate conversion appears separately. The incomes can be real or hypothetical.
 
 ## Run locally
 
