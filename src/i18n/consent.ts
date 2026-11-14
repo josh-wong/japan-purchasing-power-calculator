@@ -25,7 +25,7 @@ const ja: ConsentMessages = {
   decline: '拒否',
   close: '閉じる',
   settings: '分析の設定',
-  statusSignal: 'ブラウザーがグローバル プライバシー コントロールまたは Do Not Track のシグナルを送信しているため、分析はオフのままです。',
+  statusSignal: 'ブラウザーが Global Privacy Control（GPC）または Do Not Track のシグナルを送信しているため、分析はオフのままです。',
   statusAllowed: '現在、分析は許可されています。',
   statusOff: '現在、分析はオフです。',
   confirmation: (granted: boolean, stored: boolean) =>

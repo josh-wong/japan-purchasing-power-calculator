@@ -413,11 +413,11 @@ it('starts in Japanese when the browser prefers it and formats for that language
   expect(field('rate-pair').textContent).toBe('適用レート：1 USD = 159.234 JPY');
   expect(field('rate-source').textContent).toBe('欧州中央銀行（ECB）の参照レート');
   expect(field('home-label').textContent).toBe('月収（USD）');
-  expect(field('home-share-note').textContent).toBe('US$4,000.00 のうち');
-  expect(field('preset').selectedOptions[0].textContent).toBe('観光施設のチケット · JP¥5,000');
+  expect(field('home-share-note').textContent).toBe('US$4,000.00 に対する割合');
+  expect(field('preset').selectedOptions[0].textContent).toBe('観光施設の入場券 · JP¥5,000');
   expect(field('currency').selectedOptions[0].textContent).toBe('USD · 米ドル');
   expect(document.querySelector('[data-i18n-rich] a').textContent).toBe('Josh Wong');
-  expect(document.querySelector('[data-i18n-rich]').textContent).toMatch(/^Josh Wong が、/);
+  expect(document.querySelector('[data-i18n-rich]').textContent).toMatch(/、Josh Wong が作成しました。$/);
 });
 
 it('switches language without changing entries, results, or errors, and saves nothing', async () => {
@@ -436,7 +436,7 @@ it('switches language without changing entries, results, or errors, and saves no
   expect(field('home').value).toBe('bad');
   expect(field('currency').value).toBe('EUR');
   expect(field('currency').selectedOptions[0].textContent).toBe('EUR · ユーロ');
-  expect(field('home-error').textContent).toBe('数字を使い、桁区切りにはカンマ、小数点にはピリオドを使ってください。');
+  expect(field('home-error').textContent).toBe('数字で入力し、桁区切りにはカンマ（,）、小数点にはピリオド（.）を使ってください。');
   expect(field('home').getAttribute('aria-invalid')).toBe('true');
   expect(field('equivalent').textContent).toBe('—');
   expect(field('result-note').textContent).toBe('同じ割合の金額を見るには、比較する収入を入力してください。');
@@ -469,7 +469,7 @@ it('shows Japanese rate states and tiny shares', async () => {
   prefer('ja');
   await open({ fetchImpl: async () => { throw new Error('offline'); } });
   expect(field('rate-note').textContent).toBe(' · 為替レートを取得できません');
-  expect(field('rate-source').textContent).toBe('ECB 参照レート');
+  expect(field('rate-source').textContent).toBe('欧州中央銀行（ECB）の参照レート');
   change('price', '0.01');
   expect(field('japan-share').textContent).toBe('0.01% 未満');
   expect(field('result-note').textContent).toBe('JP¥0.01 は、入力した円の収入の 0.01% 未満にあたります。比較する収入で同じ割合にあたる金額は US$0.00 です。');
