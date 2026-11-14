@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      BASE_PATH: /japan-purchasing-power-calculator/
-      PUBLISHED_RATES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/rates.json
+      BASE_PATH: /
+      PUBLISHED_RATES_URL: https://yenlens.080f53.com/rates.json
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

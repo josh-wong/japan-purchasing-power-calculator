@@ -43,4 +43,4 @@ jobs:
             echo "::error::The build's scripts include analytics code."
             exit 1
           fi
-      - run: npm run build -- --base=/japan-purchasing-power-calculator/
+      - run: npm run build -- --base=/yenlens/

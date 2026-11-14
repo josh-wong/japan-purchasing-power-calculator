@@ -34,4 +34,4 @@ For each test run:
 - Recommend performance optimizations
 - Check code coverage for critical paths
 
-App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/yenlens/` to verify project asset paths.
