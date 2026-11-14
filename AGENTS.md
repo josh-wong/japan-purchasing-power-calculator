@@ -25,7 +25,7 @@ Japan Purchasing Power Calculator is an English-language web calculator for visi
 
 ### Key components
 
-The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`. Wiring that command into scheduled GitHub Pages publication is separate work.
+The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`.
 
 Vite builds two pages: the calculator (`index.html`) and the privacy notice (`privacy.html`), configured in `vite.config.ts`. Both load the shared theme script in `public/theme.js`. `src/analytics.ts` holds the consent record, opt-out signal, and Google Analytics loader logic, and `src/consent-banner.ts` renders the opt-in panel and the **Analytics settings** control. Analytics is enabled only when the build sets `VITE_GA_MEASUREMENT_ID`.
 
@@ -33,7 +33,7 @@ Vite builds two pages: the calculator (`index.html`) and the privacy notice (`pr
 
 Keep income-based equivalence independent of exchange rates: `(priceJpy / japanMonthly) * comparisonMonthly`. Convert currency with `priceJpy * (target units per EUR / JPY per EUR)`. Round only for display, and preserve independently computable results when other inputs or rates are missing. Keep comparison incomes keyed by currency for the visit.
 
-Production rates must be fetched and validated in CI from the ECB and served from the same origin; a failed refresh must stop publication. Show the source and publication date, flag snapshots older than seven calendar days, and resolve assets through Vite’s base URL for both root and project Pages paths. The mockup’s keyless Frankfurter request and bundled fallback are prototype behavior, not the production data pipeline.
+Production rates must be fetched and validated in CI from the ECB and served from the same origin; a failed refresh must stop publication, except that a non-scheduled build may reuse the already published snapshot (validated and not outdated) when only the ECB fetch fails. Show the source and publication date, flag snapshots older than seven calendar days, and resolve assets through Vite’s base URL for both root and project Pages paths. The mockup’s keyless Frankfurter request and bundled fallback are prototype behavior, not the production data pipeline.
 
 Usage analytics is opt-in for every visitor. Load no Google script and make no request to Google until the visitor selects **Allow analytics**. Treat Global Privacy Control and Do Not Track as a decline, and treat a missing, expired, or unreadable consent record as no choice. Load the consent module through a dynamic import guarded by `import.meta.env.VITE_GA_MEASUREMENT_ID`, so builds without an ID contain no analytics code. Never pass calculator state to analytics code; it must not import from, or read, the form.
 

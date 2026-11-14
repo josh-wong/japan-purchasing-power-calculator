@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RateDataError } from '../src/rate-snapshot.ts';
-import { buildSnapshot, fetchEcbXml, parseEcbXml, updateRates } from '../scripts/update-rates.mjs';
+import { buildSnapshot, fetchEcbXml, parseEcbXml, optionValue, updateRates, updateRatesWithFallback } from '../scripts/update-rates.mjs';
 
 const xml = readFileSync('tests/fixtures/ecb-daily.xml', 'utf8');
 const expected = JSON.parse(readFileSync('tests/fixtures/rates.json', 'utf8'));
@@ -194,5 +194,63 @@ describe('writing the asset', () => {
     const written = JSON.parse(await readFile(output, 'utf8'));
     expect(written.date).toBe('2026-11-12');
     expect(written.unitsPerEuro.JPY).toBe(176.96);
+  });
+});
+
+describe('published snapshot fallback', () => {
+  let dir;
+  beforeEach(async () => { dir = await mkdtemp(path.join(tmpdir(), 'rates-fallback-')); });
+  afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
+
+  const fallbackUrl = 'https://example.test/rates.json';
+  const route = (ecb, published) => async (url) => (String(url) === fallbackUrl ? published() : ecb());
+  const down = async () => { throw new Error('offline'); };
+  const json = (value) => async () => ({ ok: true, status: 200, text: async () => value });
+
+  it('uses the ECB feed and ignores the fallback when the feed works', async () => {
+    const output = path.join(dir, 'rates.json');
+    const result = await updateRatesWithFallback({ fetchImpl: route(respond(xml), json('{}')), output, now, fallbackUrl });
+    expect(result.usedFallback).toBe(false);
+    expect(JSON.parse(await readFile(output, 'utf8'))).toEqual(expected);
+  });
+
+  it('writes the validated published snapshot when the ECB fetch fails', async () => {
+    const output = path.join(dir, 'rates.json');
+    const result = await updateRatesWithFallback({ fetchImpl: route(down, json(JSON.stringify(expected))), output, now, fallbackUrl });
+    expect(result.usedFallback).toBe(true);
+    expect(result.warnings[0]).toContain('offline');
+    expect(JSON.parse(await readFile(output, 'utf8'))).toEqual(expected);
+  });
+
+  it('fails without a fallback URL, and when the published snapshot is unusable', async () => {
+    const output = path.join(dir, 'rates.json');
+    await expect(updateRatesWithFallback({ fetchImpl: route(down, json('{}')), output, now })).rejects.toThrow(RateDataError);
+    await expect(updateRatesWithFallback({ fetchImpl: route(down, json('{}')), output, now, fallbackUrl })).rejects.toThrow(/also unavailable/);
+    await expect(updateRatesWithFallback({ fetchImpl: route(down, json('<html>')), output, now, fallbackUrl })).rejects.toThrow(/also unavailable/);
+    await expect(updateRatesWithFallback({ fetchImpl: route(down, async () => ({ ok: false, status: 404 })), output, now, fallbackUrl })).rejects.toThrow(/404/);
+    expect(existsSync(output)).toBe(false);
+  });
+
+  it('rejects a published snapshot that is already outdated', async () => {
+    const output = path.join(dir, 'rates.json');
+    const old = { ...expected, date: '2026-10-01' };
+    await expect(updateRatesWithFallback({ fetchImpl: route(down, json(JSON.stringify(old))), output, now, fallbackUrl })).rejects.toThrow(/outdated/);
+  });
+
+  it('does not fall back on errors that are not feed problems', async () => {
+    const output = path.join(dir, 'missing', 'rates.json');
+    const blocker = path.join(dir, 'missing');
+    await (await import('node:fs/promises')).writeFile(blocker, 'a file where a directory is needed');
+    await expect(updateRatesWithFallback({ fetchImpl: route(respond(xml), json(JSON.stringify(expected))), output, now, fallbackUrl })).rejects.not.toThrow(RateDataError);
+  });
+});
+
+describe('command-line options', () => {
+  it('reads both --name value and --name=value', () => {
+    expect(optionValue(['--fallback-url=https://a.test/x?y=1'], '--fallback-url')).toBe('https://a.test/x?y=1');
+    expect(optionValue(['--fallback-url', 'https://a.test'], '--fallback-url')).toBe('https://a.test');
+    expect(optionValue([], '--fallback-url')).toBeUndefined();
+    expect(() => optionValue(['--fallback-url='], '--fallback-url')).toThrow(RateDataError);
+    expect(() => optionValue(['--fallback-url'], '--fallback-url')).toThrow(RateDataError);
   });
 });

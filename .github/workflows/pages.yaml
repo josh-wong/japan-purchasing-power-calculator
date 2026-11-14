@@ -1,0 +1,90 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Refresh the ECB snapshot after its usual 16:00 CET publication.
+    - cron: '20 17 * * *'
+      timezone: 'Europe/Brussels'
+  workflow_dispatch:
+
+# Serialize production runs and skip superseded builds. Never cancel a running deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_PATH: /japan-purchasing-power-calculator/
+      PUBLISHED_RATES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/rates.json
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Fetch and validate ECB rates
+        id: rates
+        run: npm run rates:update -- --fallback-url="$PUBLISHED_RATES_URL"
+      - name: Fail scheduled refreshes that reused the published snapshot
+        if: steps.rates.outputs.rates_fallback == 'true' && github.event_name == 'schedule'
+        run: |
+          echo "::error::The ECB refresh failed, so the scheduled run did not refresh the snapshot."
+          exit 1
+      - name: Note that the published snapshot was reused
+        if: steps.rates.outputs.rates_fallback == 'true' && github.event_name != 'schedule'
+        run: echo "::warning::The ECB feed was unavailable, so this deployment reuses the previously published snapshot."
+      - name: Warn when the analytics measurement ID is missing
+        env:
+          GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
+        run: |
+          if [ -z "$GA_MEASUREMENT_ID" ]; then
+            echo "::warning::The GA_MEASUREMENT_ID repository variable is not set, so this build has no analytics."
+          fi
+      - name: Build for the project Pages path
+        run: npm run build -- --base="$BASE_PATH"
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
+      - name: Confirm the rate snapshot is in the build output
+        run: |
+          if [ ! -s dist/rates.json ]; then
+            echo "::error::dist/rates.json is missing or empty; the site would show 'Exchange rate unavailable'."
+            exit 1
+          fi
+          node -e "const r = JSON.parse(require('fs').readFileSync('dist/rates.json', 'utf8')); if (!r.date || !(r.unitsPerEuro?.JPY > 0)) { console.error('dist/rates.json is not a valid snapshot.'); process.exit(1); } console.log('Snapshot dated ' + r.date);"
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
