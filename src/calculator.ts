@@ -25,5 +25,7 @@ export function calculate(price: number | null, japan: number | null, home: numb
   const converted = price !== null && yenPerUnit !== null && yenPerUnit > 0 ? price / yenPerUnit : null;
   const homeShare = converted !== null && home !== null ? converted / home : null;
   const equivalent = japanShare !== null && home !== null ? japanShare * home : null;
-  return { japanShare, converted, homeShare, equivalent };
+  // Converts the unrounded equivalent back to yen, so it needs a rate but the equivalent itself does not.
+  const equivalentYen = equivalent !== null && yenPerUnit !== null && yenPerUnit > 0 ? equivalent * yenPerUnit : null;
+  return { japanShare, converted, homeShare, equivalent, equivalentYen };
 }

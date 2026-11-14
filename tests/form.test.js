@@ -41,6 +41,32 @@ it('renders the default fixture and all nine presets', () => {
   expect(field('preset').selectedOptions[0].textContent).toBe('Custom price');
   expect(field('example-disclaimer').textContent).toBe('These are example prices. Actual prices vary.');
 });
+it('shows the yen equivalent next to the main amount and announces it', async () => {
+  expect(field('equivalent-yen').hidden).toBe(false);
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥12,739 at today\'s rate');
+  change('home', '4000.01');
+  await vi.advanceTimersByTimeAsync(450);
+  expect(field('result-announcement').textContent).toBe(
+    'Equivalent cost at the same share of income US$80.00, about JP¥12,739 at today\'s rate. Price at the exchange rate US$31.40.',
+  );
+  change('currency', 'EUR', 'change');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥14,174 at today\'s rate');
+  change('currency', 'GBP', 'change');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥16,951 at today\'s rate');
+});
+it('hides the yen equivalent without a rate, without an income, or for yen', async () => {
+  change('home', '');
+  expect(field('equivalent-yen').hidden).toBe(true);
+  expect(field('equivalent-yen').textContent).toBe('');
+  change('home', '4000');
+  expect(field('equivalent-yen').hidden).toBe(false);
+  field('currency').add(new Option('JPY', 'JPY'));
+  change('currency', 'JPY', 'change');
+  expect(field('equivalent-yen').hidden).toBe(true);
+  await open({ fetchImpl: async () => { throw new Error('offline'); } });
+  expect(field('equivalent').textContent).toBe('US$80.00');
+  expect(field('equivalent-yen').hidden).toBe(true);
+});
 it('restores income per currency and resets the scenario', () => {
   change('home', '4321.12');
   change('currency', 'EUR', 'change');
@@ -121,7 +147,7 @@ it('preserves fractional yen on blur and announces after a pause', () => {
   expect(field('price').value).toBe('5,000.5');
   expect(field('result-announcement').textContent).toBe('');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$80.01. Price at the exchange rate US$31.40.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$80.01, about JP¥12,740 at today\'s rate. Price at the exchange rate US$31.40.');
 });
 it('announces the missing-income prompt while keeping the available converted price', () => {
   change('japan', '');
@@ -358,7 +384,7 @@ it('announces the converted price when rates arrive after the visitor starts typ
   resolve(respond(rates));
   await settle();
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00. Price at the exchange rate US$37.68.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00, about JP¥15,286 at today\'s rate. Price at the exchange rate US$37.68.');
 });
 
 it('stays quiet when rates arrive before the visitor has touched the form', async () => {
