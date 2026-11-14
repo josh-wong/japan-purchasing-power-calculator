@@ -13,7 +13,7 @@
     <div class="wrap topline-inner">
       <div class="wordmark"><span class="mark" aria-hidden="true">¥</span><span>Yen Lens</span></div>
       <div class="header-actions">
-        <label class="language-control">
+        <label class="language-control select-shell">
           <span class="sr-only" data-i18n="header.language">Language</span>
           <select id="language" class="language-select">
             <option value="en" lang="en">English</option>
@@ -54,18 +54,20 @@
         <div class="preset-field">
           <label class="field-label" for="preset" data-i18n="form.presetLabel">Try an example</label>
           <p id="example-disclaimer" class="field-note" data-i18n="form.presetDisclaimer">These are example prices. Actual prices vary.</p>
-          <select id="preset" aria-describedby="example-disclaimer">
-            <option value="" disabled hidden>Custom price</option>
-            <option value="1000">Casual lunch · JP¥1,000</option>
-            <option value="2000">Box of Japanese sweets · JP¥2,000</option>
-            <option value="5000" selected>Attraction ticket · JP¥5,000</option>
-            <option value="10000">Pair of sneakers · JP¥10,000</option>
-            <option value="15000">Shinkansen ticket (one way) · JP¥15,000</option>
-            <option value="30000">Rice cooker · JP¥30,000</option>
-            <option value="60000">Hotel stay (three nights) · JP¥60,000</option>
-            <option value="100000">Private sightseeing tour (four people) · JP¥100,000</option>
-            <option value="200000">Gaming PC (8 GB VRAM) · JP¥200,000</option>
-          </select>
+          <div class="select-shell">
+            <select id="preset" aria-describedby="example-disclaimer">
+              <option value="" disabled hidden>Custom price</option>
+              <option value="1000">Casual lunch · JP¥1,000</option>
+              <option value="2000">Box of Japanese sweets · JP¥2,000</option>
+              <option value="5000" selected>Attraction ticket · JP¥5,000</option>
+              <option value="10000">Pair of sneakers · JP¥10,000</option>
+              <option value="15000">Shinkansen ticket (one way) · JP¥15,000</option>
+              <option value="30000">Rice cooker · JP¥30,000</option>
+              <option value="60000">Hotel stay (three nights) · JP¥60,000</option>
+              <option value="100000">Private sightseeing tour (four people) · JP¥100,000</option>
+              <option value="200000">Gaming PC (8 GB VRAM) · JP¥200,000</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -94,9 +96,11 @@
             <div class="form-row">
               <div>
                 <label class="field-label" for="currency" data-i18n="form.currencyLabel">Comparison currency</label>
-                <select id="currency">
-                  <option value="USD">USD · US Dollar</option>
-                </select>
+                <div class="select-shell">
+                  <select id="currency">
+                    <option value="USD">USD · US Dollar</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label id="home-label" class="field-label" for="home">Monthly income (USD)</label>
