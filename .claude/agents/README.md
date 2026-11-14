@@ -1,4 +1,4 @@
-# Custom agents for Japan Purchasing Power Calculator
+# Custom agents for Yen Lens
 
 This directory contains project-specific Claude Code subagents. They follow the Vite app and preserved reference mockup.
 
