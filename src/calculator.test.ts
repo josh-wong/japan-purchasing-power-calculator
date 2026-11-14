@@ -39,12 +39,21 @@ describe('independent calculations', () => {
   });
   it('preserves results when inputs or rates are missing', () => {
     expect(calculate(5000, null, null, rate).converted).toBeCloseTo(31.400553);
-    expect(calculate(5000, 250000, 4000, null)).toEqual({ equivalent: 80, japanShare: .02, converted: null, homeShare: null });
-    expect(calculate(null, 250000, 4000, rate)).toEqual({ equivalent: null, japanShare: null, converted: null, homeShare: null });
+    expect(calculate(5000, 250000, 4000, null)).toEqual({ equivalent: 80, japanShare: .02, converted: null, homeShare: null, equivalentYen: null });
+    expect(calculate(null, 250000, 4000, rate)).toEqual({ equivalent: null, japanShare: null, converted: null, homeShare: null, equivalentYen: null });
     expect(calculate(5000, null, 4000, rate).homeShare).not.toBeNull();
   });
+  it('converts the unrounded equivalent to yen only when a rate exists', () => {
+    // 80 USD at 177.18 / 1.1127 yen per USD.
+    expect(calculate(5000, 250000, 4000, rate).equivalentYen).toBeCloseTo(80 * rate);
+    expect(calculate(5000, 250000, 4000, 1).equivalentYen).toBe(80);
+    expect(calculate(5000, 250000, 4000, null).equivalentYen).toBeNull();
+    expect(calculate(5000, 250000, 4000, 0).equivalentYen).toBeNull();
+    expect(calculate(5000, null, 4000, rate).equivalentYen).toBeNull();
+    expect(calculate(5000, 250000, null, rate).equivalentYen).toBeNull();
+  });
   it('allows zero prices and shares above 100%', () => {
-    expect(calculate(0, 1, 1, rate)).toEqual({ equivalent: 0, converted: 0, japanShare: 0, homeShare: 0 });
+    expect(calculate(0, 1, 1, rate)).toEqual({ equivalent: 0, converted: 0, japanShare: 0, homeShare: 0, equivalentYen: 0 });
     expect(calculate(200, 100, 100, 1).japanShare).toBe(2);
     expect(calculate(.01, 100000, 4000, rate).japanShare).toBe(0.0000001);
   });

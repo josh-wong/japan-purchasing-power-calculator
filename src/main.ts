@@ -143,10 +143,12 @@ function render(announce = true) {
   if (presetField.value !== '' && price.amount !== Number(presetField.value)) presetField.value = '';
 
   const rate = rateFor(currency);
-  const { japanShare, converted, homeShare, equivalent } = calculate(price.amount, japan.amount, home.amount, rate?.yenPerUnit ?? null);
+  const { japanShare, converted, homeShare, equivalent, equivalentYen } = calculate(price.amount, japan.amount, home.amount, rate?.yenPerUnit ?? null);
   const japanShareText = formatShare(japanShare);
   const equivalentText = equivalent === null ? '—' : formatMoney(equivalent, currency);
   const convertedText = converted === null ? '—' : formatMoney(converted, currency);
+  // The yen figure repeats the amount when the comparison currency is yen, so it is left out.
+  const equivalentYenPhrase = equivalentYen !== null && currency !== 'JPY' ? `${formatMoney(equivalentYen, 'JPY')} at the ECB rate` : null;
 
   let resultNote = 'Enter a price in yen to compare the cost.';
   if (price.amount !== null) {
@@ -163,6 +165,8 @@ function render(announce = true) {
   }
 
   byId('equivalent').textContent = equivalentText;
+  byId('equivalent-yen').hidden = equivalentYenPhrase === null;
+  byId('equivalent-yen').textContent = equivalentYenPhrase === null ? '' : `≈ ${equivalentYenPhrase}`;
   byId('result-note').textContent = resultNote;
   byId('converted').textContent = convertedText;
   byId('rate-note').textContent = rate?.note ?? (ratesStatus === 'loading' ? ' · Loading exchange rate…' : ' · Exchange rate unavailable');
@@ -179,12 +183,13 @@ function render(announce = true) {
     hasInteracted = true;
     clearTimeout(announcementTimer);
     announcementTimer = setTimeout(() => {
+      const equivalentSuffix = equivalentYenPhrase === null ? '' : `, about ${equivalentYenPhrase}`;
       const metrics = [
-        ['equivalent', 'Equivalent cost at the same share of income'], ['converted', 'Price at the exchange rate'],
+        ['equivalent', 'Equivalent cost at the same share of income', equivalentSuffix], ['converted', 'Price at the exchange rate', ''],
       ];
-      const spokenResults = metrics.map(([id, label]) => {
+      const spokenResults = metrics.map(([id, label, suffix]) => {
         const value = byId(id).textContent ?? '';
-        return value === '—' ? '' : `${label} ${value}. `;
+        return value === '—' ? '' : `${label} ${value}${suffix}. `;
       }).join('');
       const conversionStatus = price.amount !== null && !rate && ratesStatus !== 'loading' ? 'Exchange rate unavailable.' : '';
       byId('result-announcement').textContent = [spokenResults.trim(), conversionStatus, equivalent === null ? resultNote : ''].filter(Boolean).join(' ');
