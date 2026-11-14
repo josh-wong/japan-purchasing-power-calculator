@@ -43,16 +43,16 @@ it('renders the default fixture and all nine presets', () => {
 });
 it('shows the yen equivalent next to the main amount and announces it', async () => {
   expect(field('equivalent-yen').hidden).toBe(false);
-  expect(field('equivalent-yen').textContent).toBe('≈ JP¥12,739 at today\'s rate');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥12,739 at the ECB rate');
   change('home', '4000.01');
   await vi.advanceTimersByTimeAsync(450);
   expect(field('result-announcement').textContent).toBe(
-    'Equivalent cost at the same share of income US$80.00, about JP¥12,739 at today\'s rate. Price at the exchange rate US$31.40.',
+    'Equivalent cost at the same share of income US$80.00, about JP¥12,739 at the ECB rate. Price at the exchange rate US$31.40.',
   );
   change('currency', 'EUR', 'change');
-  expect(field('equivalent-yen').textContent).toBe('≈ JP¥14,174 at today\'s rate');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥14,174 at the ECB rate');
   change('currency', 'GBP', 'change');
-  expect(field('equivalent-yen').textContent).toBe('≈ JP¥16,951 at today\'s rate');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥16,951 at the ECB rate');
 });
 it('hides the yen equivalent without a rate, without an income, or for yen', async () => {
   change('home', '');
@@ -147,7 +147,7 @@ it('preserves fractional yen on blur and announces after a pause', () => {
   expect(field('price').value).toBe('5,000.5');
   expect(field('result-announcement').textContent).toBe('');
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$80.01, about JP¥12,740 at today\'s rate. Price at the exchange rate US$31.40.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$80.01, about JP¥12,740 at the ECB rate. Price at the exchange rate US$31.40.');
 });
 it('announces the missing-income prompt while keeping the available converted price', () => {
   change('japan', '');
@@ -384,7 +384,7 @@ it('announces the converted price when rates arrive after the visitor starts typ
   resolve(respond(rates));
   await settle();
   vi.advanceTimersByTime(450);
-  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00, about JP¥15,286 at today\'s rate. Price at the exchange rate US$37.68.');
+  expect(field('result-announcement').textContent).toBe('Equivalent cost at the same share of income US$96.00, about JP¥15,286 at the ECB rate. Price at the exchange rate US$37.68.');
 });
 
 it('stays quiet when rates arrive before the visitor has touched the form', async () => {
