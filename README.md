@@ -28,7 +28,7 @@ Run these commands from the repository root.
 | `npm test` | Run parsing, calculation, rate-update, form-interaction, and analytics consent regression tests |
 | `npm run lint` | Run ESLint, repository text checks, and reference mockup syntax checks |
 
-The default build serves a domain root. For the project Pages path, run `npm run build -- --base=/japan-purchasing-power-calculator/`. Preview the built output at that path.
+The default build serves a domain root. For the project Pages path, run `npm run build -- --base=/yenlens/`. Preview the built output at that path.
 
 ## Implementation and rate data
 
@@ -42,9 +42,9 @@ See the [product requirements](docs/_planning/v1.0-product-requirements-doc.md) 
 
 ## Deployment
 
-The calculator is published at `https://www.080f53.com/japan-purchasing-power-calculator/` through GitHub Pages, with **Settings → Pages → Source** set to **GitHub Actions**. `.github/workflows/pages.yaml` builds and deploys on pushes to `main`, daily at 17:20 Europe/Brussels (after the ECB's usual publication), and on manual dispatch. Pull requests run only the lint and build-and-test workflows, which never publish.
+The calculator is published at `https://yenlens.080f53.com/` through GitHub Pages, with **Settings → Pages → Source** set to **GitHub Actions** and the custom domain `yenlens.080f53.com` set in **Settings → Pages**. The repository has no `CNAME` file, because the Actions deployment ignores one. `.github/workflows/pages.yaml` builds and deploys on pushes to `main`, daily at 17:20 Europe/Brussels (after the ECB's usual publication), and on manual dispatch. Pull requests run only the lint and build-and-test workflows, which never publish.
 
-The build job runs lint, type-checking, and tests, then `npm run rates:update -- --fallback-url=<published rates.json>`, then builds with the `/japan-purchasing-power-calculator/` base, confirms `dist/rates.json` exists, and uploads `dist/`. The deploy job runs only if the build job succeeds, so a failed validation, test, or build leaves the previously published site and snapshot in place. If only the ECB fetch fails, the workflow reuses the snapshot already published at the site (validated the same way and rejected if older than seven days) so code changes can still ship, with a warning. A scheduled run that has to reuse it fails instead, so a missed refresh stays visible. The first deployment has nothing to reuse, so it needs a working ECB feed. Runs share one concurrency group, so they never overlap. GitHub keeps only one queued run, so a newer push can replace a queued scheduled run; the next daily run refreshes the snapshot.
+The build job runs lint, type-checking, and tests, then `npm run rates:update -- --fallback-url=<published rates.json>`, then builds with the `/` base, confirms `dist/rates.json` exists, and uploads `dist/`. The deploy job runs only if the build job succeeds, so a failed validation, test, or build leaves the previously published site and snapshot in place. If only the ECB fetch fails, the workflow reuses the snapshot already published at the site (validated the same way and rejected if older than seven days) so code changes can still ship, with a warning. A scheduled run that has to reuse it fails instead, so a missed refresh stays visible. The first deployment has nothing to reuse, so it needs a working ECB feed. Runs share one concurrency group, so they never overlap. GitHub keeps only one queued run, so a newer push can replace a queued scheduled run; the next daily run refreshes the snapshot.
 
 Set the `GA_MEASUREMENT_ID` repository variable (**Settings → Secrets and variables → Actions → Variables**) to enable analytics in the production build. Without it, the build succeeds with a warning and the site has no analytics.
 

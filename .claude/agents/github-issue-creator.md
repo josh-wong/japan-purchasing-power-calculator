@@ -40,4 +40,4 @@ Create issues that help the team understand scope and context.
 
 Read the v1.0 PRD and design document under `docs/_planning/`. Reference the relevant section; the requirements do not currently have stable IDs. Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`; distinguish mockup syntax checks from application tests. Follow all sections and checklist items in the applicable GitHub template, and retain the AI co-author trailer required by `AGENTS.md` when committing.
 
-App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/japan-purchasing-power-calculator/` to verify project asset paths.
+App commands: `npm run build`, `npm run typecheck`, `npm test`, and `npm run lint`. Use `npm run build -- --base=/yenlens/` to verify project asset paths.
