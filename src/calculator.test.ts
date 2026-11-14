@@ -3,23 +3,26 @@ import { calculate, parseAmount } from './calculator';
 
 describe('numeric input', () => {
   it.each(['1,234.50', '１２３４．５０', '１，２３４．５０'])('normalizes %s', raw => {
-    expect(parseAmount(raw, true, 'JPY')).toEqual({ amount: 1234.5, precision: 1, error: '' });
+    expect(parseAmount(raw, true, 'JPY')).toEqual({ amount: 1234.5, precision: 1, error: null });
   });
   it.each([
     ['2500,000', 2500000], ['1,5', 15], ['12,34,567', 1234567],
     ['1,', 1], ['1,,000', 1000], ['２５００，０００．５０', 2500000.5],
   ])('accepts misplaced whole-number commas in %s', (raw, amount) => {
     expect(parseAmount(raw as string, true, 'USD').amount).toBe(amount);
-    expect(parseAmount(raw as string, true, 'USD').error).toBe('');
+    expect(parseAmount(raw as string, true, 'USD').error).toBeNull();
   });
   it.each(['-1', '1e3', 'Infinity', '1.234', '1234567890123', '1.2,3', '1.2.3', ','])('rejects %s', raw => {
     expect(parseAmount(raw, true, 'USD').amount).toBeNull();
-    expect(parseAmount(raw, true, 'USD').error).not.toBe('');
+    expect(parseAmount(raw, true, 'USD').error).not.toBeNull();
   });
   it('distinguishes incomplete, zero price, and zero pay', () => {
-    expect(parseAmount(' ', false, 'JPY')).toEqual({ amount: null, error: '' });
+    expect(parseAmount(' ', false, 'JPY')).toEqual({ amount: null, error: null });
     expect(parseAmount('0', true, 'JPY').amount).toBe(0);
-    expect(parseAmount('0', false, 'JPY').error).not.toBe('');
+    expect(parseAmount('0', false, 'JPY').error).toEqual({ code: 'zero' });
+    expect(parseAmount('1.234', true, 'USD').error).toEqual({ code: 'decimals', decimals: 2 });
+    expect(parseAmount('1234567890123', true, 'USD').error).toEqual({ code: 'digits' });
+    expect(parseAmount('1e3', true, 'USD').error).toEqual({ code: 'format' });
     expect(parseAmount('.50', true, 'JPY').amount).toBe(.5);
     expect(parseAmount('999999999999.99', true, 'USD').amount).toBe(999999999999.99);
     expect(parseAmount('1.234', false, 'KWD').amount).toBe(1.234);

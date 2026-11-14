@@ -26,7 +26,12 @@ beforeEach(() => open());
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  delete navigator.languages;
+  localStorage.clear();
 });
+function prefer(...languages) {
+  Object.defineProperty(navigator, 'languages', { value: languages, configurable: true });
+}
 it('renders the default fixture and all nine presets', () => {
   expect(field('equivalent').textContent).toBe('US$80.00');
   expect(field('converted').textContent).toBe('US$31.40');
@@ -391,4 +396,83 @@ it('stays quiet when rates arrive before the visitor has touched the form', asyn
   await open();
   vi.advanceTimersByTime(450);
   expect(field('result-announcement').textContent).toBe('');
+});
+
+it('starts in Japanese when the browser prefers it and formats for that language', async () => {
+  prefer('ja-JP', 'en');
+  await open();
+  expect(document.documentElement.lang).toBe('ja');
+  expect(document.title).toBe('Yen Lens：日本の購買力計算ツール');
+  expect(field('language').value).toBe('ja');
+  expect(document.querySelector('h1').textContent).toBe('その買い物は、円の月収のどのくらいにあたりますか？');
+  expect(field('result-title').textContent).toBe('収入に対して同じ割合の金額');
+  expect(field('equivalent').textContent).toBe('US$80.00');
+  expect(field('equivalent-yen').textContent).toBe('≈ JP¥12,739（ECB レートで換算）');
+  expect(field('result-note').textContent).toBe('JP¥5,000 は、入力した円の収入の約 2% にあたります。比較する収入で同じ割合にあたる金額は US$80.00 です。');
+  expect(field('rate-note').textContent).toBe(' · 2026年11月11日');
+  expect(field('rate-pair').textContent).toBe('適用レート：1 USD = 159.234 JPY');
+  expect(field('rate-source').textContent).toBe('欧州中央銀行（ECB）の参照レート');
+  expect(field('home-label').textContent).toBe('月収（USD）');
+  expect(field('home-share-note').textContent).toBe('US$4,000.00 のうち');
+  expect(field('preset').selectedOptions[0].textContent).toBe('観光施設のチケット · JP¥5,000');
+  expect(field('currency').selectedOptions[0].textContent).toBe('USD · 米ドル');
+  expect(document.querySelector('[data-i18n-rich] a').textContent).toBe('Josh Wong');
+  expect(document.querySelector('[data-i18n-rich]').textContent).toMatch(/^Josh Wong が、/);
+});
+
+it('switches language without changing entries, results, or errors, and saves nothing', async () => {
+  const address = window.location.href;
+  change('price', '12345.5');
+  change('home', '1.234');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  change('currency', 'EUR', 'change');
+  change('home', 'bad');
+  field('home').dispatchEvent(new Event('focusout', { bubbles: true }));
+  expect(field('home-error').textContent).toBe('Use digits, commas for grouping, and a period for decimals.');
+
+  change('language', 'ja', 'change');
+  expect(document.documentElement.lang).toBe('ja');
+  expect(field('price').value).toBe('12345.5');
+  expect(field('home').value).toBe('bad');
+  expect(field('currency').value).toBe('EUR');
+  expect(field('currency').selectedOptions[0].textContent).toBe('EUR · ユーロ');
+  expect(field('home-error').textContent).toBe('数字を使い、桁区切りにはカンマ、小数点にはピリオドを使ってください。');
+  expect(field('home').getAttribute('aria-invalid')).toBe('true');
+  expect(field('equivalent').textContent).toBe('—');
+  expect(field('result-note').textContent).toBe('同じ割合の金額を見るには、比較する収入を入力してください。');
+  expect(field('preset').selectedOptions[0].textContent).toBe('入力した価格');
+
+  change('currency', 'USD', 'change');
+  expect(field('home-error').textContent).toBe('小数点以下は 2 桁までにしてください。');
+  change('language', 'en', 'change');
+  expect(document.documentElement.lang).toBe('en');
+  expect(field('home-error').textContent).toBe('Use up to 2 decimal places.');
+  expect(field('price').value).toBe('12345.5');
+  expect(field('preset').selectedOptions[0].textContent).toBe('Custom price');
+  expect(localStorage.length).toBe(0);
+  expect(window.location.href).toBe(address);
+});
+
+it('announces results in Japanese after a pause', async () => {
+  change('language', 'ja', 'change');
+  change('home', '4000.01');
+  await vi.advanceTimersByTimeAsync(450);
+  expect(field('result-announcement').textContent).toBe(
+    '収入に対して同じ割合の金額：US$80.00、ECB レートで約 JP¥12,739。為替レートでの価格：US$31.40。',
+  );
+  change('japan', '');
+  await vi.advanceTimersByTimeAsync(450);
+  expect(field('result-announcement').textContent).toBe('為替レートでの価格：US$31.40。同じ割合の金額を見るには、円の月収を入力してください。');
+});
+
+it('shows Japanese rate states and tiny shares', async () => {
+  prefer('ja');
+  await open({ fetchImpl: async () => { throw new Error('offline'); } });
+  expect(field('rate-note').textContent).toBe(' · 為替レートを取得できません');
+  expect(field('rate-source').textContent).toBe('ECB 参照レート');
+  change('price', '0.01');
+  expect(field('japan-share').textContent).toBe('0.01% 未満');
+  expect(field('result-note').textContent).toBe('JP¥0.01 は、入力した円の収入の 0.01% 未満にあたります。比較する収入で同じ割合にあたる金額は US$0.00 です。');
+  await open({ now: '2026-11-30T12:00:00Z' });
+  expect(field('rate-note').textContent).toBe(' · 2026年11月11日 · 古いレート');
 });

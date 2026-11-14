@@ -159,13 +159,14 @@ function scriptSelector(id: string) {
  * Loads gtag.js after consent. Advertising storage and signals stay off, the prefixed cookies
  * are limited to this host and app path and expire with the consent choice (`cookieSeconds`;
  * 0 makes them session cookies, for a choice that lasts only this visit),
- * and the page address and referrer are reduced by pageLocation().
+ * and the page address and referrer are reduced by pageLocation(). `pageTitle` replaces the
+ * document title, which follows the selected language, so the language choice isn't sent.
  *
  * Allowing analytics again after a withdrawal on the same page repeats the configuration, which
  * sends a page view and recreates the cookies deleted on withdrawal.
  */
 export function startAnalytics(
-  id: string, cookieSeconds: number, doc: Document = document, basePath: string = import.meta.env.BASE_URL,
+  id: string, cookieSeconds: number, doc: Document = document, basePath: string = import.meta.env.BASE_URL, pageTitle?: string,
 ): void {
   const win = doc.defaultView as unknown as AnalyticsWindow;
   win[`ga-disable-${id}`] = false;
@@ -188,6 +189,7 @@ export function startAnalytics(
   const referrer = pageReferrer(doc.referrer);
   win.gtag?.('config', id, {
     page_location: pageLocation(win.location.href),
+    ...(pageTitle ? { page_title: pageTitle } : {}),
     ...(referrer ? { page_referrer: referrer } : {}),
     allow_google_signals: false,
     allow_ad_personalization_signals: false,

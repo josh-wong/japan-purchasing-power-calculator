@@ -2,10 +2,14 @@ import {
   browserStorage, clearConsent, consentMaxAgeDays, consentSecondsLeft, deleteAnalyticsCookies, hasOptOutSignal, measurementId, readConsent,
   startAnalytics, stopAnalytics, writeConsent, type ConsentChoice,
 } from './analytics';
+import { locale, onLocaleChange } from './i18n';
+import { consentMessages } from './i18n/consent';
 
 interface ConsentOptions {
   /** Link to the privacy notice from the panel. The notice page itself turns this off. */
   linkToNotice?: boolean;
+  /** The English page title sent to Google in place of the translated document title. */
+  pageTitle: string;
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -16,13 +20,13 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-const settingsHint = 'You can change this anytime with Analytics settings at the bottom of the page.';
+const text = () => consentMessages[locale()];
 
 /**
  * Shows the opt-in panel and the Analytics settings control, and starts analytics only after
  * the visitor allows it. Does nothing when no measurement ID was configured at build time.
  */
-export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {}): void {
+export function initAnalyticsConsent({ linkToNotice = true, pageTitle }: ConsentOptions): void {
   const configuredId = measurementId();
   if (!configuredId) return;
   const id: string = configuredId;
@@ -35,30 +39,26 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
   const record = signal ? null : readConsent(storage, Date.now());
   let choice: ConsentChoice | null = record?.choice ?? null;
 
-  if (record?.choice === 'granted') startAnalytics(id, consentSecondsLeft(record.at, Date.now()));
+  if (record?.choice === 'granted') startAnalytics(id, consentSecondsLeft(record.at, Date.now()), document, basePath, pageTitle);
   else deleteAnalyticsCookies(document, basePath);
 
   const announcer = element('p', { id: 'consent-announcement', className: 'sr-only' });
   announcer.setAttribute('role', 'status');
-  const description = element('p', {},
-    'With your permission, this site uses Google Analytics cookies to count visits and see which pages people use. ',
-    'It never sends the amounts you enter or the options you choose.');
-  if (linkToNotice) description.append(' ', element('a', { href: 'privacy.html' }, 'Read the privacy notice'));
+  const title = element('p', { id: 'consent-title', className: 'consent-title' });
+  const description = element('p');
   const status = element('p', { className: 'consent-status', hidden: true });
-  const allow = element('button', { type: 'button', className: 'consent-button' }, 'Allow analytics');
-  const decline = element('button', { type: 'button', className: 'consent-button' }, 'Decline');
-  const close = element('button', { type: 'button', className: 'consent-button' }, 'Close');
+  const allow = element('button', { type: 'button', className: 'consent-button' });
+  const decline = element('button', { type: 'button', className: 'consent-button' });
+  const close = element('button', { type: 'button', className: 'consent-button' });
   const panel = element('section', { id: 'analytics-consent', className: 'consent', hidden: true, tabIndex: -1 },
     element('div', { className: 'wrap consent-inner' },
-      element('div', { className: 'consent-text' },
-        element('p', { id: 'consent-title', className: 'consent-title' }, 'Usage analytics'),
-        description, status),
+      element('div', { className: 'consent-text' }, title, description, status),
       element('div', { className: 'consent-actions' }, allow, decline, close)));
   panel.setAttribute('aria-labelledby', 'consent-title');
   document.body.prepend(panel);
   document.body.append(announcer);
 
-  const settings = element('button', { type: 'button', id: 'analytics-settings', className: 'link-button' }, 'Analytics settings');
+  const settings = element('button', { type: 'button', id: 'analytics-settings', className: 'link-button' });
   settings.setAttribute('aria-controls', panel.id);
   settings.setAttribute('aria-expanded', 'false');
   const footerLinks = document.getElementById('footer-links');
@@ -66,13 +66,33 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
 
   let returnFocus: HTMLElement | null = null;
 
-  function show(fromSettings: boolean) {
-    const current = signal
-      ? 'Your browser is sending a Global Privacy Control or Do Not Track signal, so analytics stays off.'
-      : choice === 'granted' ? 'Analytics is currently allowed.'
-        : choice === 'denied' ? 'Analytics is currently off.' : '';
+  function showStatus() {
+    const messages = text();
+    const current = signal ? messages.statusSignal
+      : choice === 'granted' ? messages.statusAllowed
+        : choice === 'denied' ? messages.statusOff : '';
     status.textContent = current;
     status.hidden = !current;
+  }
+
+  // Runs again when the visitor switches language, so an open panel follows the page.
+  function showText() {
+    const messages = text();
+    title.textContent = messages.title;
+    description.replaceChildren(messages.description);
+    if (linkToNotice) description.append(' ', element('a', { href: 'privacy.html' }, messages.readNotice));
+    allow.textContent = messages.allow;
+    decline.textContent = messages.decline;
+    close.textContent = messages.close;
+    settings.textContent = messages.settings;
+    showStatus();
+  }
+
+  showText();
+  onLocaleChange(showText);
+
+  function show(fromSettings: boolean) {
+    showStatus();
     allow.hidden = signal;
     decline.hidden = signal;
     close.hidden = !signal;
@@ -90,7 +110,8 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
     panel.hidden = true;
     settings.setAttribute('aria-expanded', 'false');
     if (!hadFocus) return;
-    const target = returnFocus ?? document.querySelector('h1');
+    // The privacy notice holds one heading per language; only the shown one can take focus.
+    const target = returnFocus ?? Array.from(document.querySelectorAll('h1')).find((heading) => !heading.closest('[hidden]')) ?? null;
     if (target && target !== settings) target.tabIndex = -1;
     target?.focus();
     returnFocus = null;
@@ -107,11 +128,10 @@ export function initAnalyticsConsent({ linkToNotice = true }: ConsentOptions = {
     const stored = writeConsent(storage, next, Date.now());
     // A stored choice lasts the full period, and so do the cookies. A choice that couldn't be
     // stored lasts this visit only, so the cookies become session cookies.
-    if (next === 'granted') startAnalytics(id, stored ? consentMaxAgeDays * 86_400 : 0);
+    if (next === 'granted') startAnalytics(id, stored ? consentMaxAgeDays * 86_400 : 0, document, basePath, pageTitle);
     else stopAnalytics(id);
     hide();
-    const scope = stored ? '' : ' for this visit';
-    announce(`${next === 'granted' ? 'Analytics allowed' : 'Analytics off'}${scope}. ${settingsHint}`);
+    announce(text().confirmation(next === 'granted', stored));
   }
 
   allow.addEventListener('click', () => choose('granted'));

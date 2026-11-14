@@ -21,13 +21,13 @@ For detailed information about this project, refer to the following internal doc
 
 ## Repository overview
 
-Yen Lens is an English-language web calculator for visitors and residents comparing purchases in Japan against monthly take-home income in yen and another currency. It leads with an income-based equivalent cost and shows exchange-rate conversion separately.
+Yen Lens is a web calculator in English and Japanese for visitors and residents comparing purchases in Japan against monthly take-home income in yen and another currency. It leads with an income-based equivalent cost and shows exchange-rate conversion separately.
 
 ### Key components
 
 The app uses HTML, CSS, TypeScript, and Vite, with pure parsing/calculations and in-memory form state. The standalone mockup remains the reference. `scripts/update-rates.mjs` produces a validated same-origin `public/rates.json` from the ECB feed (generated, not committed), and tests use dated fixtures in `tests/fixtures/`.
 
-Vite builds two pages: the calculator (`index.html`) and the privacy notice (`privacy.html`), configured in `vite.config.ts`. Both load the shared theme script in `public/theme.js`. `src/analytics.ts` holds the consent record, opt-out signal, and Google Analytics loader logic, and `src/consent-banner.ts` renders the opt-in panel and the **Analytics settings** control. Analytics is enabled only when the build sets `VITE_GA_MEASUREMENT_ID`.
+Vite builds two pages: the calculator (`index.html`) and the privacy notice (`privacy.html`), configured in `vite.config.ts`. Both load the shared theme script in `public/theme.js`. `src/i18n/` holds the English and Japanese text (`en.ts`, `ja.ts`, and `consent.ts` for the consent panel) and the module that applies the selected language to both pages. `src/analytics.ts` holds the consent record, opt-out signal, and Google Analytics loader logic, and `src/consent-banner.ts` renders the opt-in panel and the **Analytics settings** control. Analytics is enabled only when the build sets `VITE_GA_MEASUREMENT_ID`.
 
 ### Architecture patterns
 
@@ -108,13 +108,13 @@ PR titles follow the same verb-first convention as commit messages (for example,
 
 ### Code standards
 
-Use idiomatic HTML, CSS, JavaScript for the mockup and TypeScript for the planned app. Follow the design document’s crimson palette, currency formatting, numeric validation, and English UI text. Support a 320 CSS-pixel viewport, keyboard navigation, visible focus, field labels, inline errors, and polite result announcements. Support System, Light, and Dark appearance, live system changes, and unavailable browser storage.
+Use idiomatic HTML, CSS, JavaScript for the mockup and TypeScript for the planned app. Follow the design document’s crimson palette, currency formatting, numeric validation, and UI text. Add every UI string to both `src/i18n/en.ts` and `src/i18n/ja.ts`, and keep the Japanese privacy notice in `privacy.html` in step with the English one. Support a 320 CSS-pixel viewport, keyboard navigation, visible focus, field labels, inline errors, and polite result announcements. Support System, Light, and Dark appearance, live system changes, and unavailable browser storage.
 
 Use Node.js 24.15 or later in the 24.x line, or Node.js 26 or later and Python 3. Install with `npm ci`; run `npm run dev`, `npm run build`, and `npm run preview`. Checks are `npm run typecheck`, `npm test`, and `npm run lint`. Lint includes repository text checks and reference mockup syntax validation. CI runs lint, type-checking, tests, and builds for root and project base paths.
 
 ## Privacy and security considerations
 
-Purchase and income inputs, selected currencies and presets, and results stay in memory for the current browser session. Do not persist them or send them in requests, URLs, logs, analytics events, or crash reports. Browser storage may hold only the theme preference and the analytics consent record (choice, time, and notice version). The calculation requires no account or personal data collection.
+Purchase and income inputs, selected currencies and presets, and results stay in memory for the current browser session. Do not persist them or send them in requests, URLs, logs, analytics events, or crash reports. Browser storage may hold only the theme preference and the analytics consent record (choice, time, and notice version). The language choice stays in memory for the visit; start each visit from the browser's preferred language, and never store the choice or put it in URLs or analytics. Send Google the English page title, never the translated one. The calculation requires no account or personal data collection.
 
 Google Analytics 4 is the only third-party destination, and only after opt-in. It may receive standard page views and automatically collected usage data. Keep Google signals, advertising features, and ad personalization off. Limit analytics cookies to the app's host and base path, and never let them outlive the consent choice. Reduce the page address and referrer to their paths plus `utm_*` campaign tags, and delete the cookies when the visitor withdraws. Other sites on `080f53.com` can set unprefixed `_ga` cookies for the whole domain, so prefix its cookies with `jppc` and never read or delete unprefixed `_ga` cookies. Increase `consentVersion` in `src/analytics.ts` and update `privacy.html` whenever what analytics collects changes.
 
